@@ -88,7 +88,7 @@ def main():
     if not ran:
         print("[-] Fuzzer run execution did not complete successfully. Qutting.")
         sys.exit(-1)
-        
+
     if output_format == "json":
         fuzzer.export_results_to_json(f"results_{package_name}.json")
 

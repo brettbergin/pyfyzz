@@ -53,9 +53,9 @@ class Fuzzer:
 
         return test_map
 
-    '''
+    """
     This begins the issue regarding import statement generation
-    '''
+    """
 
     def generate_import_statement(self, method_path):
         """
@@ -108,9 +108,9 @@ class Fuzzer:
     #     print(f"[!] Attempting to use import statement: {import_statement}")
     #     return import_statement
 
-    '''
+    """
     This ends the issue regarding import statement generation
-    '''
+    """
 
     """
     The initial (legacy) way we determined input fuzzing parameters.
@@ -118,7 +118,7 @@ class Fuzzer:
     # def _generate_fuzzed_inputs(self, parameters):
     #     """
     #     Generate random inputs for the method's parameters.
-    #     This is a simple mutation based payload generator 
+    #     This is a simple mutation based payload generator
     #     and can be extended to handle additional parameter types.
     #     """
 
@@ -168,9 +168,16 @@ class Fuzzer:
             # Get the list of possible fuzzed values for this parameter
             fuzzed_values = self.fuzz_parameter(param.param_type)
 
+            print(
+                f"[+] Testing parameter: {param.name} with {len(fuzzed_values)} permutations."
+            )
             for fuzzed_value in fuzzed_values:
-                input_set = {p.name: None for p in parameters}  # Initialize with None for all params
-                input_set[param.name] = fuzzed_value  # Set the fuzzed value for the current param
+                input_set = {
+                    p.name: None for p in parameters
+                }  # Initialize with None for all params
+                input_set[param.name] = (
+                    fuzzed_value  # Set the fuzzed value for the current param
+                )
 
                 # Save this set of fuzzed inputs
                 fuzzed_inputs_sets.append(input_set)
@@ -188,10 +195,10 @@ class Fuzzer:
             fuzzed_values.append("not_an_int")
 
             # Boundary Values
-            fuzzed_values.extend([sys.maxsize, -sys.maxsize-1, 0, -1, 1])
+            fuzzed_values.extend([sys.maxsize, -sys.maxsize - 1, 0, -1, 1])
 
             # Overflow/Underflow (depending on how the system handles them)
-            fuzzed_values.extend([sys.maxsize + 1, -sys.maxsize-2])
+            fuzzed_values.extend([sys.maxsize + 1, -sys.maxsize - 2])
 
         elif param_type == "str":
             # Type Mismatch
@@ -221,7 +228,9 @@ class Fuzzer:
             fuzzed_values.append("not_a_float")
 
             # Boundary Values
-            fuzzed_values.extend([sys.float_info.max, -sys.float_info.max, 0.0, -1.0, 1.0])
+            fuzzed_values.extend(
+                [sys.float_info.max, -sys.float_info.max, 0.0, -1.0, 1.0]
+            )
 
             # Overflow/Underflow
             fuzzed_values.extend([sys.float_info.max * 2, -sys.float_info.max * 2])
@@ -232,7 +241,7 @@ class Fuzzer:
             fuzzed_values.append("random_noise")  # Random noise data
 
         return fuzzed_values
-    
+
     # def fuzz_method(self, method_path):
     #     """
     #     Fuzz a specific method by generating random inputs based on the parameters.
@@ -292,7 +301,7 @@ class Fuzzer:
 
     def fuzz_method(self, method_path):
         import_statement = self.generate_import_statement(method_path)
-        
+
         exec(import_statement, globals())
         components = method_path.split(".")
         method_name = components[-1]
@@ -307,7 +316,7 @@ class Fuzzer:
             method = getattr(module, method_name)
 
         print(f"[+] Fuzzing: {import_statement}.{method_name}")
-        
+
         method_result = MethodResult(method_name=method_name)
         parameters = self.test_map[method_path].parameters
         fuzzed_inputs_sets = self._generate_fuzzed_inputs(parameters)
@@ -322,11 +331,11 @@ class Fuzzer:
         self.fuzz_results.method_results.append(method_result)
 
     def export_results_to_json(self, file_path: str):
-        with open(file_path, 'w') as json_file:
+        with open(file_path, "w") as json_file:
             json.dump(asdict(self.fuzz_results), json_file, indent=4)
 
     def export_results_to_yaml(self, file_path: str):
-        with open(file_path, 'w') as yaml_file:
+        with open(file_path, "w") as yaml_file:
             yaml.dump(asdict(self.fuzz_results), yaml_file, default_flow_style=False)
 
     def summarize_exceptions(self):
@@ -335,7 +344,7 @@ class Fuzzer:
         """
         print("\n[+] Exception Summary:")
         for exception_type, count in self.exception_count.items():
-            print(f"    {exception_type}: {count} occurrence(s)")
+            print(f"[-->] Unhandled Exception: {exception_type}: {count} occurrence(s)")
 
     def run(self):
         """
@@ -349,7 +358,7 @@ class Fuzzer:
         for method_path in self.test_map:
             self.fuzz_method(method_path)
         print("[+] Completed method/function fuzzing.")
-        
+
         self.summarize_exceptions()
 
         return True

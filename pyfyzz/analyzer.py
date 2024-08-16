@@ -46,7 +46,6 @@ class PythonPackageAnalyzer:
 
         return package_info
 
-
     def analyze_module(self, module_name, module, package_info, ignore_private):
         """
         Analyze the classes, methods, and functions within a module and store
