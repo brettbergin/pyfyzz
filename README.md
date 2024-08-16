@@ -37,9 +37,23 @@ PyFyzz is a powerful tool designed to analyze Python packages, generate detailed
 To install PyFyzz, you can clone the repository and install the dependencies:
 
 ```bash
-git clone https://github.com/yourusername/pyfyzz.git
+python -m virtualenv .venv
+source .venv/bin/activate
+git clone https://github.com/brettbergin/pyfyzz.git
 cd pyfyzz
 pip install -r requirements.txt
+pip install -e .
+```
+
+To install the example python package in this repository for testing run:
+```bash
+cd tests/examples/
+pip install -e .
+```
+
+```bash
+
+pyfyzz -p pyfyzzexample -o yaml -i
 ```
 
 ## Usage
@@ -52,16 +66,16 @@ pip install -r requirements.txt
 
 ### Example Usage
 
-Analyze a package named `mypackage` and export the results to a YAML file, ignoring private methods/functions:
+Analyze a package named `pyfyzzexample` and export the results to a YAML file, ignoring private methods/functions:
 
 ```bash
-python -m pyfyzz.main -p mypackage -o yaml -i
+pyfyzz -p pyfyzzexample -o yaml -i
  ```
 
-Analyze a package named `mypackage` and export the results to a JSON file, including all methods/functions:
+Analyze a package named `pyfyzzexample` and export the results to a JSON file, including all methods/functions:
 
 ```bash
-python -m pyfyzz.main -p mypackage -o json
+pyfyzz -p pyfyzzexample -o json
 ```
 
 ## Components
