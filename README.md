@@ -4,26 +4,26 @@ PyFyzz is a powerful tool designed to analyze Python packages, generate detailed
 
 ## Table of Contents
 
- - Features
- - Installation
- - Usage
-   - Command-Line Options
-   - Example Usage
- - Components
-   - Package Analysis
-   - Fuzz Testing
-   - Result Exporting
- - Data Classes
-   - ParameterInfo
-   - MethodInfo
-   - ClassInfo
-   - ModuleInfo
-   - PackageInfo
-   - TestCase
-   - MethodResult
-   - FuzzResult
- - Contributing
- - License
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Command-Line Options](#command-line-options)
+  - [Example Usage](#example-usage)
+- [Components](#components)
+  - [Package Analysis](#package-analysis)
+  - [Fuzz Testing](#fuzz-testing)
+  - [Result Exporting](#result-exporting)
+- [Data Classes](#data-classes)
+  - [ParameterInfo](#parameterinfo)
+  - [MethodInfo](#methodinfo)
+  - [ClassInfo](#classinfo)
+  - [ModuleInfo](#moduleinfo)
+  - [PackageInfo](#packageinfo)
+  - [TestCase](#testcase)
+  - [MethodResult](#methodresult)
+  - [FuzzResult](#fuzzresult)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Features
 
