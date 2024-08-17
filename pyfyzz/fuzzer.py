@@ -3,11 +3,10 @@
 import sys
 import json
 import importlib
+import inspect
 from dataclasses import asdict
 from collections import defaultdict
-
 import yaml
-
 from .models import FuzzResult, MethodResult, TestCase
 
 
@@ -36,7 +35,6 @@ class Fuzzer:
         Generate a map of all methods/functions to be fuzzed.
         The map will contain the module name, class (if applicable), and method/function name.
         """
-
         test_map = {}
 
         for module_name, classes in self.package_under_test.modules.items():
@@ -53,110 +51,39 @@ class Fuzzer:
 
         return test_map
 
-    """
-    This begins the issue regarding import statement generation
-    """
-
     def generate_import_statement(self, method_path):
         """
-        Generate a valid Python import statement for a given method_path.
+        Generate a valid Python import statement by introspecting the package structure.
         """
-        # TODO: Refactor this function to improve how we resolve the method path
-        # - into an import statement that aligns with the package architecture.
-
         components = method_path.split(".")
+        package = components[0]
 
-        package, module, clazz = components[0], components[1], components[2]
-        method_name = components[-1]
+        # Start by assuming the path might refer to a module or class in the package
+        current_module = importlib.import_module(package)
+        import_path = package
+        class_or_method = None
 
-        # import_path = '.'.join(components[:-1])
-        # import_statement = f"from {import_path} import {method_name}"
+        for component in components[1:]:
+            try:
+                if inspect.ismodule(current_module):
+                    current_module = importlib.import_module(f"{import_path}.{component}")
+                    import_path += f".{component}"
+                elif inspect.isclass(current_module) or inspect.ismethod(current_module):
+                    class_or_method = component
+                    break
+                else:
+                    class_or_method = component
+                    break
+            except ImportError:
+                class_or_method = component
+                break
 
-        import_statement = f"from {package}.{module} import {clazz}"
+        if class_or_method:
+            import_statement = f"from {import_path} import {class_or_method}"
+        else:
+            import_statement = f"import {import_path}"
+
         return import_statement
-
-    # def generate_import_statement(self, method_path):
-    #     """
-    #     Generate a valid Python import statement for a given method_path.
-    #     Adjust the method to dynamically resolve the import path based on package structure.
-    #     """
-
-    #     components = method_path.split(".")
-    #     print(f"[!] Running with components: {components}")
-    #     # Assume a minimum of a package and a method (e.g., "package.method")
-    #     if len(components) < 2:
-    #         raise ValueError("Invalid method path. At least package and method are required.")
-
-    #     package = components[0]
-    #     method_name = components[-1]
-
-    #     # Handle cases based on the number of components
-    #     if len(components) == 2:
-    #         # Case: 'package.method'
-    #         import_statement = f"from {package} import {method_name}"
-    #     elif len(components) == 3:
-    #         # Case: 'package.module.method' or 'package.class.method'
-    #         module_or_class = components[1]
-    #         import_statement = f"from {package}.{module_or_class} import {method_name}"
-    #     elif len(components) > 3:
-    #         # Case: 'package.subpackage.module.class.method'
-    #         import_path = '.'.join(components[:-1])  # All components except the last (method)
-    #         import_statement = f"from {import_path} import {method_name}"
-    #     else:
-    #         raise ValueError(f"Cannot resolve import statement for method path: {method_path}")
-
-    #     print(f"[!] Attempting to use import statement: {import_statement}")
-    #     return import_statement
-
-    """
-    This ends the issue regarding import statement generation
-    """
-
-    """
-    The initial (legacy) way we determined input fuzzing parameters.
-    """
-    # def _generate_fuzzed_inputs(self, parameters):
-    #     """
-    #     Generate random inputs for the method's parameters.
-    #     This is a simple mutation based payload generator
-    #     and can be extended to handle additional parameter types.
-    #     """
-
-    #     fuzzed_inputs = {}
-    #     # for param in parameters:
-    #     #     if param.param_type == "int":
-    #     #         fuzzed_inputs[param.name] = random.randint(-100, 100)
-    #     #     elif param.param_type == "str":
-    #     #         fuzzed_inputs[param.name] = "".join(
-    #     #             random.choices("abcdefghijklmnopqrstuvwxyz", k=10)
-    #     #         )
-    #     #     elif param.param_type == "bool":
-    #     #         fuzzed_inputs[param.name] = random.choice([True, False])
-    #     #     else:
-    #     #         fuzzed_inputs[param.name] = None  # Or generate a more complex structure
-    #     for param in parameters:
-    #         if param.param_type == "int":
-    #             # fuzzed_inputs[param.name] = random.randint(-100, 100)
-    #             fuzzed_inputs[param.name] = "".join(
-    #                 random.choices("abcdefghijklmnopqrstuvwxyz", k=10)
-    #             )
-    #         elif param.param_type == "str":
-    #             # fuzzed_inputs[param.name] = "".join(
-    #             #     random.choices("abcdefghijklmnopqrstuvwxyz", k=10)
-    #             # )
-    #             fuzzed_inputs[param.name] = random.randint(-100, 100)
-
-    #         elif param.param_type == "bool":
-    #             # fuzzed_inputs[param.name] = random.choice([True, False])
-    #             fuzzed_inputs[param.name] = random.choice([0, 1])
-
-    #         else:
-    #             fuzzed_inputs[param.name] = None  # Or generate a more complex structure
-
-    #     return fuzzed_inputs
-    """
-    This ends the legacy way we determined input fuzzing paramters.
-    """
 
     def _generate_fuzzed_inputs(self, parameters):
         """
@@ -168,16 +95,10 @@ class Fuzzer:
             # Get the list of possible fuzzed values for this parameter
             fuzzed_values = self.fuzz_parameter(param.param_type)
 
-            print(
-                f"[+] Testing parameter: {param.name} with {len(fuzzed_values)} permutations."
-            )
+            print(f"[+] Testing parameter: {param.name} with {len(fuzzed_values)} permutations.")
             for fuzzed_value in fuzzed_values:
-                input_set = {
-                    p.name: None for p in parameters
-                }  # Initialize with None for all params
-                input_set[param.name] = (
-                    fuzzed_value  # Set the fuzzed value for the current param
-                )
+                input_set = {p.name: None for p in parameters}  # Initialize with None for all params
+                input_set[param.name] = fuzzed_value  # Set the fuzzed value for the current param
 
                 # Save this set of fuzzed inputs
                 fuzzed_inputs_sets.append(input_set)
@@ -191,125 +112,111 @@ class Fuzzer:
         fuzzed_values = []
 
         if param_type == "int":
-            # Type Mismatch
-            fuzzed_values.append("not_an_int")
-
-            # Boundary Values
-            fuzzed_values.extend([sys.maxsize, -sys.maxsize - 1, 0, -1, 1])
-
-            # Overflow/Underflow (depending on how the system handles them)
-            fuzzed_values.extend([sys.maxsize + 1, -sys.maxsize - 2])
-
+            fuzzed_values.extend(self.fuzz_integers())
         elif param_type == "str":
-            # Type Mismatch
-            fuzzed_values.append(12345)
-
-            # Empty String
-            fuzzed_values.append("")
-
-            # Special Characters
-            fuzzed_values.append("\n")
-            fuzzed_values.append("\t")
-            fuzzed_values.append("\0")
-            fuzzed_values.append("!@#$%^&*()")
-
-            # Long String
-            fuzzed_values.append("A" * 10000)
-
+            fuzzed_values.extend(self.fuzz_strings())
         elif param_type == "bool":
-            # Type Mismatch
-            fuzzed_values.append("not_a_bool")
-
-            # Boundary Values
-            fuzzed_values.extend([0, 1])
-
+            fuzzed_values.extend(self.fuzz_booleans())
+        elif param_type == "list":
+            fuzzed_values.extend(self.fuzz_lists())
+        elif param_type == "dict":
+            fuzzed_values.extend(self.fuzz_dicts())
         elif param_type == "float":
-            # Type Mismatch
-            fuzzed_values.append("not_a_float")
-
-            # Boundary Values
-            fuzzed_values.extend(
-                [sys.float_info.max, -sys.float_info.max, 0.0, -1.0, 1.0]
-            )
-
-            # Overflow/Underflow
-            fuzzed_values.extend([sys.float_info.max * 2, -sys.float_info.max * 2])
-
+            fuzzed_values.extend(self.fuzz_floats())
         else:
-            # For unknown or complex types, we can add more specific fuzzing strategies
-            fuzzed_values.append(None)  # None for unknown types
-            fuzzed_values.append("random_noise")  # Random noise data
+            fuzzed_values.append(None)  # Default case for unknown types
 
         return fuzzed_values
 
-    # def fuzz_method(self, method_path):
-    #     """
-    #     Fuzz a specific method by generating random inputs based on the parameters.
-    #     """
-    #     import_statement = self.generate_import_statement(method_path)
-    #     print(f"[+] Fuzzing: {import_statement}")
+    def fuzz_integers(self):
+        return [
+            "not_an_int",           # Type mismatch
+            sys.maxsize,            # Boundary value
+            -sys.maxsize - 1,       # Boundary value
+            0,                      # Edge case
+            -1, 1,                  # Small integers
+            sys.maxsize + 1,        # Overflow
+            -sys.maxsize - 2        # Underflow
+        ]
 
-    #     # Dynamically import the class or method
-    #     exec(import_statement, globals())
+    def fuzz_strings(self):
+        return [
+            12345,                  # Type mismatch
+            "",                     # Empty string
+            "\n", "\t", "\0",       # Special characters
+            "A" * 10000,            # Long string
+            "!@#$%^&*()",           # Special symbols
+            None,                   # Null case
+        ]
 
-    #     # Split the method_path to identify class and method names
-    #     components = method_path.split(".")
-    #     method_name = components[-1]
-    #     class_name = components[-2] if len(components) > 2 else None
-    #     module_name = ".".join(components[:-2])
+    def fuzz_booleans(self):
+        return [
+            "not_a_bool",           # Type mismatch
+            True, False,            # Normal values
+            0, 1,                   # Integer equivalents
+            None                    # Null case
+        ]
 
-    #     # Import the module containing the class or function
-    #     module = importlib.import_module(module_name)
+    def fuzz_lists(self):
+        return [
+            [],                     # Empty list
+            [1, 2, 3],              # Normal list
+            ["a", "b", "c"],        # Mixed type list
+            None,                   # Null case
+        ]
 
-    #     # If class_name is present, we are dealing with an instance method
-    #     if class_name:
-    #         # Get the class and create an instance
-    #         cls = getattr(module, class_name)
-    #         instance = cls()  # Creating an instance of the class
+    def fuzz_dicts(self):
+        return [
+            {},                     # Empty dictionary
+            {"key": "value"},       # Normal dictionary
+            {"key": None},          # Dictionary with None value
+            {1: "one", 2: "two"},   # Dictionary with integer keys
+            None                    # Null case
+        ]
 
-    #         # Get the method from the instance
-    #         method = getattr(instance, method_name)
-    #     else:
-    #         # If no class, it's a standalone function
-    #         method = getattr(module, method_name)
-
-    #     method_result = MethodResult(method_name=method_name)
-
-    #     # Generate random inputs for each parameter
-    #     method_info = self.test_map[method_path]  # This is a MethodInfo object
-    #     parameters = method_info.parameters  # Access the parameters attribute
-    #     fuzzed_inputs_sets = self._generate_fuzzed_inputs(parameters)  # Assume this returns a list of dicts
-
-    #     source_code = inspect.getsource(method)
-    #     print("[+] Evaluating Target:\n")
-    #     print(source_code)
-
-    #     # Iterate over each set of fuzzed inputs
-    #     for fuzzed_inputs in fuzzed_inputs_sets:
-    #         test_case = TestCase(inputs=fuzzed_inputs)
-    #         print(
-    #             f"[!] (TEST) Targeting {method.__name__}({fuzzed_inputs})"
-    #         )
-
-    #         try:
-    #             test_case.return_value = method(**fuzzed_inputs)
-    #         except Exception as e:
-    #             test_case.exception = str(e)
-    #             self.exception_count[type(e).__name__] += 1
-    #         method_result.test_cases.append(test_case)
-    #     self.fuzz_results.method_results.append(method_result)
+    def fuzz_floats(self):
+        return [
+            "not_a_float",          # Type mismatch
+            sys.float_info.max,     # Boundary value
+            -sys.float_info.max,    # Boundary value
+            0.0,                    # Edge case
+            -1.0, 1.0,              # Small floats
+            sys.float_info.max * 2, # Overflow
+            -sys.float_info.max * 2 # Underflow
+        ]
 
     def fuzz_method(self, method_path):
         import_statement = self.generate_import_statement(method_path)
 
+        # Dynamically import the class or method
         exec(import_statement, globals())
+
+        # Split the method_path to identify class and method names
         components = method_path.split(".")
         method_name = components[-1]
         class_name = components[-2] if len(components) > 2 else None
         module_name = ".".join(components[:-2])
+        
+        # Import the module containing the class or function
         module = importlib.import_module(module_name)
+
         if class_name:
             cls = getattr(module, class_name)
+            # Check if the class is abstract
+            if inspect.isabstract(cls):
+                print(f"[!!] Skipping abstract class {cls.__name__}")
+                return
+            
+            # Handle required constructor arguments
+            init_signature = inspect.signature(cls.__init__)
+            init_params = init_signature.parameters
+            required_args = [p for p in init_params if init_params[p].default == inspect.Parameter.empty and p != 'self']
+
+            if required_args:
+                print(f"[!!] Skipping class {cls.__name__} due to required constructor arguments: {required_args}")
+                return
+            
+            # If no required arguments, create an instance
             instance = cls()
             method = getattr(instance, method_name)
         else:
@@ -320,14 +227,21 @@ class Fuzzer:
         method_result = MethodResult(method_name=method_name)
         parameters = self.test_map[method_path].parameters
         fuzzed_inputs_sets = self._generate_fuzzed_inputs(parameters)
+
+        source_code = inspect.getsource(method)
+        print("[!] Evaluating Target:\n")
+        print(source_code)
+
         for fuzzed_inputs in fuzzed_inputs_sets:
-            test_case = TestCase(inputs=fuzzed_inputs)
+            test_case = TestCase(inputs=fuzzed_inputs)            
             try:
                 test_case.return_value = method(**fuzzed_inputs)
+            
             except Exception as e:
                 test_case.exception = str(e)
                 self.exception_count[type(e).__name__] += 1
             method_result.test_cases.append(test_case)
+
         self.fuzz_results.method_results.append(method_result)
 
     def export_results_to_json(self, file_path: str):
