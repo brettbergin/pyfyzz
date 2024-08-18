@@ -2,13 +2,15 @@
 
 import sys
 import json
+import base64
 import importlib
 import inspect
 from dataclasses import asdict
 from collections import defaultdict
 import yaml
-from .models import FuzzResult, MethodResult, TestCase
 
+from .models import FuzzResult, MethodResult, FuzzCase
+from .logger import PyFyzzLogger
 
 class Fuzzer:
     def __init__(self, package_under_test):
@@ -17,6 +19,7 @@ class Fuzzer:
         self.has_specific_types = self._check_for_specific_types()
         self.exception_count = defaultdict(int)
         self.fuzz_results = FuzzResult(name=package_under_test.name)
+        self.logger = PyFyzzLogger()
 
     def _check_for_specific_types(self):
         """
@@ -95,7 +98,7 @@ class Fuzzer:
             # Get the list of possible fuzzed values for this parameter
             fuzzed_values = self.fuzz_parameter(param.param_type)
 
-            print(f"[+] Testing parameter: {param.name} with {len(fuzzed_values)} permutations.")
+            self.logger.log("info", f"[+] Testing parameter: {param.name} with {len(fuzzed_values)} permutations.")
             for fuzzed_value in fuzzed_values:
                 input_set = {p.name: None for p in parameters}  # Initialize with None for all params
                 input_set[param.name] = fuzzed_value  # Set the fuzzed value for the current param
@@ -204,7 +207,7 @@ class Fuzzer:
             cls = getattr(module, class_name)
             # Check if the class is abstract
             if inspect.isabstract(cls):
-                print(f"[!!] Skipping abstract class {cls.__name__}")
+                self.logger.log("debug", f"[!] Skipping abstract class {cls.__name__}. We can do better.")
                 return
             
             # Handle required constructor arguments
@@ -213,7 +216,7 @@ class Fuzzer:
             required_args = [p for p in init_params if init_params[p].default == inspect.Parameter.empty and p != 'self']
 
             if required_args:
-                print(f"[!!] Skipping class {cls.__name__} due to required constructor arguments: {required_args}")
+                self.logger.log("debug", f"[!] Skipping class {cls.__name__} due to required constructor arguments: {required_args}. We can do better.")
                 return
             
             # If no required arguments, create an instance
@@ -222,18 +225,19 @@ class Fuzzer:
         else:
             method = getattr(module, method_name)
 
-        print(f"[+] Fuzzing: {import_statement}.{method_name}")
+        self.logger.log("info", f"[+] Fuzzing: '{import_statement}.{method_name}'")
 
         method_result = MethodResult(method_name=method_name)
         parameters = self.test_map[method_path].parameters
         fuzzed_inputs_sets = self._generate_fuzzed_inputs(parameters)
 
         source_code = inspect.getsource(method)
-        print("[!] Evaluating Target:\n")
-        print(source_code)
+        encoded_source = base64.b64encode(source_code.encode()).decode()
+
+        self.logger.log("debug", f"[!] Evaluating Target:\n\n{source_code}")
 
         for fuzzed_inputs in fuzzed_inputs_sets:
-            test_case = TestCase(inputs=fuzzed_inputs)            
+            test_case = FuzzCase(inputs=fuzzed_inputs, encoded_source=encoded_source)            
             try:
                 test_case.return_value = method(**fuzzed_inputs)
             
@@ -256,22 +260,22 @@ class Fuzzer:
         """
         Print a summary of all unhandled exceptions encountered during fuzzing.
         """
-        print("\n[+] Exception Summary:")
+        # self.logger.log("info", "\n[+] Exception Summary:")
         for exception_type, count in self.exception_count.items():
-            print(f"[-->] Unhandled Exception: {exception_type}: {count} occurrence(s)")
+            self.logger.log("info", f"[-->] Found New Unhandled Exception: {exception_type}: {count} occurrence(s)")
 
     def run(self):
         """
         Run the fuzzer on all methods/functions in the test map.
         """
         if not self.has_specific_types:
-            print("[-] No defined type annotations found in codebase. Fuzzing skipped.")
+            self.logger.log("error", "[-] No defined type annotations found in codebase. Fuzzing skipped.")
             return False
 
-        print("[+] Begin method/function fuzzing.")
+        self.logger.log("info", "[+] Begin method/function fuzzing.")
         for method_path in self.test_map:
             self.fuzz_method(method_path)
-        print("[+] Completed method/function fuzzing.")
+        self.logger.log("info", "[+] Completed method/function fuzzing.")
 
         self.summarize_exceptions()
 

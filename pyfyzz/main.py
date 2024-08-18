@@ -7,6 +7,7 @@ import argparse
 from .analyzer import PythonPackageAnalyzer
 from .exporter import FileExporter
 from .fuzzer import Fuzzer
+from .logger import PyFyzzLogger
 
 
 def parse_arguments():
@@ -40,36 +41,40 @@ def main():
     Main entry point for the script. Parses arguments, verifies the package,
     and performs the analysis and export.
     """
-    args = parse_arguments()
+    logger = PyFyzzLogger(name="pyfyzz")
 
+    logger.log("info", "Starting pyfyzz.")
+
+    args = parse_arguments()
     package_name = args.package_name
     ignore_private = args.ignore_private
     output_format = args.output_format
 
     if not package_name or package_name == "":
-        print(f"[-] Invalid package has been provided. Using: {package_name}. Qutting.")
+        logger.log("error", f"[-] Invalid package has been provided. Using: {package_name}. Qutting.")
         sys.exit(-1)
-    print(f"[+] Beginning package analysis for package: {package_name}")
+    logger.log("info", f"[+] Beginning package analysis for package: {package_name}")
 
     if not isinstance(ignore_private, bool) or ignore_private in ["True", "False"]:
-        print("[-] Ignore private argument is incorrect or malformed. Quitting.")
+        logger.log("info", "[-] Ignore private argument is incorrect or malformed. Quitting.")
         sys.exit("-1")
-    print(f"[+] Ignoring private methods: {ignore_private}")
+    logger.log("info", f"[+] Ignoring private methods: {ignore_private}")
 
     analyzer = PythonPackageAnalyzer()
 
     importable = analyzer.verify_importable_package(package_name)
     if not importable:
-        print(f"[-] Package: {package_name} found not to be importable. Qutting.")
+        logger.log("error", f"[-] Package: {package_name} found not to be importable. Qutting.")
         sys.exit(-1)
+    logger.log("debug", f"[!] Package found importable into runtime: {importable}")
 
     pkg_info = analyzer.run(pkg_name=package_name, ignore_private=ignore_private)
     if not pkg_info:
-        print(
+        logger.log("error",
             f"[-] Unable to analyze provided package. Using: {package_name}. Quitting."
         )
         sys.exit(-1)
-    print("[+] Package analysis is complete.")
+    logger.log("info", "[+] Package analysis is complete.")
 
     exporter = FileExporter()
 
@@ -80,19 +85,43 @@ def main():
         exporter.export_to_yaml(pkg_info, f"composition_{package_name}.yaml")
 
     else:
-        print("[-] Invalid output format provided. Skipping output & quitting.")
+        logger.log("error", 
+            "[-] Invalid output format provided. Skipping output & quitting."
+        )
         sys.exit(-1)
+    logger.log(
+        "info", 
+        "[+] Package analysis file exportation is complete."
+    )
 
     fuzzer = Fuzzer(package_under_test=pkg_info)
     ran = fuzzer.run()
     if not ran:
-        print("[-] Fuzzer run execution did not complete successfully. Qutting.")
+        logger.log(
+            "error", 
+            "[-] Fuzzer run execution did not complete successfully. Qutting."
+        )
         sys.exit(-1)
+    
+    logger.log(
+        "info", 
+        "[+] Fuzzing has been completed."
+    )
 
     if output_format == "json":
         fuzzer.export_results_to_json(f"results_{package_name}.json")
 
     if output_format == "yaml":
         fuzzer.export_results_to_yaml(f"results_{package_name}.yaml")
+
+    logger.log(
+        "info", 
+        "[+] Fuzzer results file exportation is complete."
+    )
+
+    logger.log(
+        "info", 
+        "[+] Pyfyzz finished."
+    )
 
     sys.exit(0)
