@@ -9,7 +9,7 @@ class ExampleMath:
         return int(a + b)
 
     def example_subtract(self, x: int, y: int) -> int:
-        # Verifies parameters types to defend from type confusion.
+        # Verifies parameters types to defend from type fuzzing.
         if not isinstance(x, int) or not isinstance(y, int):
             return None
         return int(x - y)
