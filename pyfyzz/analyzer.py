@@ -12,10 +12,12 @@ class PythonPackageAnalyzer:
     def __init__(self) -> None:
         self.logger = PyFyzzLogger()
 
-    def verify_importable_package(self, pkg_name: str):
+    def verify_importable_package(self, pkg_name: str) -> bool:
         """
         Verify if the provided package name is importable by checking against
         the list of available packages and modules.
+
+        returns: True or False
         """
         mods_n_pkgs = [modname for _, modname, _ in pkgutil.iter_modules()]
 
@@ -29,10 +31,13 @@ class PythonPackageAnalyzer:
             return False
 
     def enumerate_package_contents(
-        self, pkg_name, package, ignore_private=False
+        self, pkg_name: str, package: importlib.import_module, ignore_private=False
     ) -> PackageInfo:
         """
-        Analyze the contents of a package or module and return structured information.
+        Analyze the contents of a package or module and 
+        return a PackageInfo dataclass with the package contents.
+
+        returns: PackageInfo
         """
         package_info = PackageInfo(name=pkg_name)
 
@@ -47,7 +52,7 @@ class PythonPackageAnalyzer:
 
         return package_info
 
-    def analyze_module(self, module_name, module, package_info, ignore_private):
+    def analyze_module(self, module_name: str, module, package_info: PackageInfo, ignore_private: bool) -> None:
         """
         Analyze the classes, methods, and functions within a module and store
         the information in the provided PackageInfo object.
@@ -142,7 +147,7 @@ class PythonPackageAnalyzer:
 
         package_info.modules[module_name] = module_struct.classes
 
-    def run(self, pkg_name, ignore_private=False):
+    def run(self, pkg_name: str, ignore_private=False) -> PackageInfo or None: # type: ignore
         """
         Attempt to import and analyze the provided package name, returning
         structured information if successful.
