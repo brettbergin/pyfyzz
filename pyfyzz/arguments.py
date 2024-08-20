@@ -5,7 +5,7 @@ class Arguments:
     def __init__(self) -> None:
         pass
 
-    def parse_arguments(self):
+    def parse_arguments(self) -> argparse.Namespace:
         """
         Parse command-line arguments for the script.
         """

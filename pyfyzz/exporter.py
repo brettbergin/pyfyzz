@@ -12,7 +12,7 @@ class FileExporter:
     def __init__(self) -> None:
         self.logger = PyFyzzLogger()
 
-    def export_to_json(self, package_info: PackageInfo, file_path: str):
+    def export_to_json(self, package_info: PackageInfo, file_path: str) -> None:
         """
         Export the analyzed package information to a JSON file.
         """
@@ -31,7 +31,7 @@ class FileExporter:
 
         self.logger.log("info", f"[+] Package information exported to JSON file: {file_path}")
 
-    def export_to_yaml(self, package_info: PackageInfo, file_path: str):
+    def export_to_yaml(self, package_info: PackageInfo, file_path: str) -> None:
         """
         Export the analyzed package information to a YAML file.
         """

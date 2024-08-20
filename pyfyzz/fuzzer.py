@@ -8,6 +8,8 @@ import inspect
 from dataclasses import asdict
 from collections import defaultdict
 import yaml
+from typing import Dict, List
+
 
 from .models import FuzzResult, MethodResult, FuzzCase
 from .logger import PyFyzzLogger
@@ -21,7 +23,7 @@ class Fuzzer:
         self.fuzz_results = FuzzResult(name=package_under_test.name)
         self.logger = PyFyzzLogger()
 
-    def _check_for_specific_types(self):
+    def _check_for_specific_types(self) -> bool:
         """
         Check if any method in the package has a parameter type other than "Any".
         """
@@ -33,7 +35,7 @@ class Fuzzer:
                             return True
         return False
 
-    def _generate_test_map(self):
+    def _generate_test_map(self) -> Dict:
         """
         Generate a map of all methods/functions to be fuzzed.
         The map will contain the module name, class (if applicable), and method/function name.
@@ -54,7 +56,7 @@ class Fuzzer:
 
         return test_map
 
-    def generate_import_statement(self, method_path):
+    def generate_import_statement(self, method_path: str) -> str:
         """
         Generate a valid Python import statement by introspecting the package structure.
         """
@@ -88,7 +90,7 @@ class Fuzzer:
 
         return import_statement
 
-    def _generate_fuzzed_inputs(self, parameters):
+    def _generate_fuzzed_inputs(self, parameters: list) -> List:
         """
         Generate multiple fuzzed inputs for each parameter using various strategies.
         """
@@ -108,7 +110,7 @@ class Fuzzer:
 
         return fuzzed_inputs_sets
 
-    def fuzz_parameter(self, param_type):
+    def fuzz_parameter(self, param_type: str) -> List:
         """
         Apply a gauntlet of fuzzing strategies based on the parameter's expected type.
         """
@@ -131,7 +133,7 @@ class Fuzzer:
 
         return fuzzed_values
 
-    def fuzz_integers(self):
+    def fuzz_integers(self) -> List:
         return [
             "not_an_int",           # Type mismatch
             sys.maxsize,            # Boundary value
@@ -142,7 +144,7 @@ class Fuzzer:
             -sys.maxsize - 2        # Underflow
         ]
 
-    def fuzz_strings(self):
+    def fuzz_strings(self) -> List:
         return [
             12345,                  # Type mismatch
             "",                     # Empty string
@@ -152,7 +154,7 @@ class Fuzzer:
             None,                   # Null case
         ]
 
-    def fuzz_booleans(self):
+    def fuzz_booleans(self) -> List:
         return [
             "not_a_bool",           # Type mismatch
             True, False,            # Normal values
@@ -160,7 +162,7 @@ class Fuzzer:
             None                    # Null case
         ]
 
-    def fuzz_lists(self):
+    def fuzz_lists(self) -> List:
         return [
             [],                     # Empty list
             [1, 2, 3],              # Normal list
@@ -168,7 +170,7 @@ class Fuzzer:
             None,                   # Null case
         ]
 
-    def fuzz_dicts(self):
+    def fuzz_dicts(self) -> List:
         return [
             {},                     # Empty dictionary
             {"key": "value"},       # Normal dictionary
@@ -177,7 +179,7 @@ class Fuzzer:
             None                    # Null case
         ]
 
-    def fuzz_floats(self):
+    def fuzz_floats(self) -> List:
         return [
             "not_a_float",          # Type mismatch
             sys.float_info.max,     # Boundary value
@@ -188,7 +190,7 @@ class Fuzzer:
             -sys.float_info.max * 2 # Underflow
         ]
 
-    def fuzz_method(self, method_path):
+    def fuzz_method(self, method_path: str) -> None:
         import_statement = self.generate_import_statement(method_path)
 
         # Dynamically import the class or method
@@ -248,7 +250,7 @@ class Fuzzer:
 
         self.fuzz_results.method_results.append(method_result)
 
-    def export_results_to_json(self, file_path: str):
+    def export_results_to_json(self, file_path: str) -> None:
         with open(file_path, "w") as json_file:
             json.dump(asdict(self.fuzz_results), json_file, indent=4)
 
@@ -256,15 +258,14 @@ class Fuzzer:
         with open(file_path, "w") as yaml_file:
             yaml.dump(asdict(self.fuzz_results), yaml_file, default_flow_style=False)
 
-    def summarize_exceptions(self):
+    def summarize_exceptions(self) -> None:
         """
         Print a summary of all unhandled exceptions encountered during fuzzing.
         """
-        # self.logger.log("info", "\n[+] Exception Summary:")
         for exception_type, count in self.exception_count.items():
             self.logger.log("info", f"[-->] Found New Unhandled Exception: {exception_type}: {count} occurrence(s)")
 
-    def run(self):
+    def run(self) -> bool:
         """
         Run the fuzzer on all methods/functions in the test map.
         """
