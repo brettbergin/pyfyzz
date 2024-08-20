@@ -41,16 +41,17 @@ class PackageInfo:
 
 
 @dataclass
-class TestCase:
+class FuzzCase:
     inputs: Dict[str, any]
     return_value: Optional[any] = None
     exception: Optional[str] = None
+    encoded_source: Optional[str] = None  
 
 
 @dataclass
 class MethodResult:
     method_name: str
-    test_cases: List[TestCase] = field(default_factory=list)
+    test_cases: List[FuzzCase] = field(default_factory=list)
 
 
 @dataclass

@@ -6,11 +6,11 @@ from dataclasses import asdict
 import yaml
 
 from .models import PackageInfo
-
+from .logger import PyFyzzLogger
 
 class FileExporter:
     def __init__(self) -> None:
-        pass
+        self.logger = PyFyzzLogger()
 
     def export_to_json(self, package_info: PackageInfo, file_path: str):
         """
@@ -29,7 +29,7 @@ class FileExporter:
         with open(file_path, "w") as json_file:
             json.dump(package_dict, json_file, indent=4, default=custom_default)
 
-        print(f"[+] Package information exported to JSON file: {file_path}")
+        self.logger.log("info", f"[+] Package information exported to JSON file: {file_path}")
 
     def export_to_yaml(self, package_info: PackageInfo, file_path: str):
         """
@@ -42,4 +42,4 @@ class FileExporter:
         with open(file_path, "w") as yaml_file:
             yaml.dump(package_dict, yaml_file, default_flow_style=False)
 
-        print(f"[+] Package information exported to YAML file: {file_path}")
+        self.logger.log("info", f"[+] Package information exported to YAML file: {file_path}")

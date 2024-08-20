@@ -5,12 +5,12 @@ import inspect
 import importlib
 
 from .models import ModuleInfo, PackageInfo, ParameterInfo, MethodInfo
-
+from .logger import PyFyzzLogger
 
 class PythonPackageAnalyzer:
 
     def __init__(self) -> None:
-        pass
+        self.logger = PyFyzzLogger()
 
     def verify_importable_package(self, pkg_name: str):
         """
@@ -22,7 +22,8 @@ class PythonPackageAnalyzer:
         if pkg_name in mods_n_pkgs:
             return True
         else:
-            print(
+            self.logger.log(
+                "error",
                 f"[-] Package {pkg_name} is not found in the list of importable modules/packages."
             )
             return False
@@ -152,5 +153,5 @@ class PythonPackageAnalyzer:
             return results
 
         except ImportError as e:
-            print(f"Error importing package {pkg_name}. Error: {e}")
+            self.logger.log("error", f"Error importing package {pkg_name}. Error: {e}")
             return None
