@@ -2,6 +2,7 @@
 
 from .logger import PyFyzzLogger
 
+
 class PyFyzzInputValidator:
     def __init__(self):
         self.logger = PyFyzzLogger()

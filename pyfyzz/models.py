@@ -45,7 +45,7 @@ class FuzzCase:
     inputs: Dict[str, any]
     return_value: Optional[any] = None
     exception: Optional[str] = None
-    encoded_source: Optional[str] = None  
+    encoded_source: Optional[str] = None
 
 
 @dataclass

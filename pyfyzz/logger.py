@@ -4,7 +4,12 @@ from logging import FileHandler, StreamHandler, Formatter
 
 
 class PyFyzzLogger:
-    def __init__(self, name: str = "pyfyzzlogger", log_file: str = "pyfyzz.log", level=logging.DEBUG):
+    def __init__(
+        self,
+        name: str = "pyfyzzlogger",
+        log_file: str = "pyfyzz.log",
+        level=logging.DEBUG,
+    ):
         self.logger = logging.getLogger(name)
         self.level = level
         self.logger.setLevel(self.level)
@@ -21,8 +26,8 @@ class PyFyzzLogger:
 
             # Create a custom formatter
             formatter = Formatter(
-                '%(asctime)s - %(levelname)s - %(class_method)s - %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S'
+                "%(asctime)s - %(levelname)s - %(class_method)s - %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
             )
 
             # Assign formatter to handlers
@@ -43,7 +48,7 @@ class PyFyzzLogger:
                 break
 
         # Extract class and method info
-        cls = f.frame.f_locals.get('self', None)
+        cls = f.frame.f_locals.get("self", None)
         cls_name = cls.__class__.__name__ if cls else None
         method_name = f.function
 
@@ -53,7 +58,7 @@ class PyFyzzLogger:
         class_method_info = self._get_class_method_info()
 
         # Add class_method info to extra dict for formatter to use
-        extra = {'class_method': class_method_info}
+        extra = {"class_method": class_method_info}
 
         if level == "debug":
             self.logger.debug(msg, *args, extra=extra, **kwargs)

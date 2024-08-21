@@ -14,6 +14,7 @@ from typing import Dict, List
 from .models import FuzzResult, MethodResult, FuzzCase
 from .logger import PyFyzzLogger
 
+
 class Fuzzer:
     def __init__(self, package_under_test):
         self.package_under_test = package_under_test
@@ -71,9 +72,13 @@ class Fuzzer:
         for component in components[1:]:
             try:
                 if inspect.ismodule(current_module):
-                    current_module = importlib.import_module(f"{import_path}.{component}")
+                    current_module = importlib.import_module(
+                        f"{import_path}.{component}"
+                    )
                     import_path += f".{component}"
-                elif inspect.isclass(current_module) or inspect.ismethod(current_module):
+                elif inspect.isclass(current_module) or inspect.ismethod(
+                    current_module
+                ):
                     class_or_method = component
                     break
                 else:
@@ -100,10 +105,17 @@ class Fuzzer:
             # Get the list of possible fuzzed values for this parameter
             fuzzed_values = self.fuzz_parameter(param.param_type)
 
-            self.logger.log("info", f"[+] Testing parameter: {param.name} with {len(fuzzed_values)} permutations.")
+            self.logger.log(
+                "info",
+                f"[+] Testing parameter: {param.name} with {len(fuzzed_values)} permutations.",
+            )
             for fuzzed_value in fuzzed_values:
-                input_set = {p.name: None for p in parameters}  # Initialize with None for all params
-                input_set[param.name] = fuzzed_value  # Set the fuzzed value for the current param
+                input_set = {
+                    p.name: None for p in parameters
+                }  # Initialize with None for all params
+                input_set[
+                    param.name
+                ] = fuzzed_value  # Set the fuzzed value for the current param
 
                 # Save this set of fuzzed inputs
                 fuzzed_inputs_sets.append(input_set)
@@ -135,59 +147,65 @@ class Fuzzer:
 
     def fuzz_integers(self) -> List:
         return [
-            "not_an_int",           # Type mismatch
-            sys.maxsize,            # Boundary value
-            -sys.maxsize - 1,       # Boundary value
-            0,                      # Edge case
-            -1, 1,                  # Small integers
-            sys.maxsize + 1,        # Overflow
-            -sys.maxsize - 2        # Underflow
+            "not_an_int",  # Type mismatch
+            sys.maxsize,  # Boundary value
+            -sys.maxsize - 1,  # Boundary value
+            0,  # Edge case
+            -1,
+            1,  # Small integers
+            sys.maxsize + 1,  # Overflow
+            -sys.maxsize - 2,  # Underflow
         ]
 
     def fuzz_strings(self) -> List:
         return [
-            12345,                  # Type mismatch
-            "",                     # Empty string
-            "\n", "\t", "\0",       # Special characters
-            "A" * 10000,            # Long string
-            "!@#$%^&*()",           # Special symbols
-            None,                   # Null case
+            12345,  # Type mismatch
+            "",  # Empty string
+            "\n",
+            "\t",
+            "\0",  # Special characters
+            "A" * 10000,  # Long string
+            "!@#$%^&*()",  # Special symbols
+            None,  # Null case
         ]
 
     def fuzz_booleans(self) -> List:
         return [
-            "not_a_bool",           # Type mismatch
-            True, False,            # Normal values
-            0, 1,                   # Integer equivalents
-            None                    # Null case
+            "not_a_bool",  # Type mismatch
+            True,
+            False,  # Normal values
+            0,
+            1,  # Integer equivalents
+            None,  # Null case
         ]
 
     def fuzz_lists(self) -> List:
         return [
-            [],                     # Empty list
-            [1, 2, 3],              # Normal list
-            ["a", "b", "c"],        # Mixed type list
-            None,                   # Null case
+            [],  # Empty list
+            [1, 2, 3],  # Normal list
+            ["a", "b", "c"],  # Mixed type list
+            None,  # Null case
         ]
 
     def fuzz_dicts(self) -> List:
         return [
-            {},                     # Empty dictionary
-            {"key": "value"},       # Normal dictionary
-            {"key": None},          # Dictionary with None value
-            {1: "one", 2: "two"},   # Dictionary with integer keys
-            None                    # Null case
+            {},  # Empty dictionary
+            {"key": "value"},  # Normal dictionary
+            {"key": None},  # Dictionary with None value
+            {1: "one", 2: "two"},  # Dictionary with integer keys
+            None,  # Null case
         ]
 
     def fuzz_floats(self) -> List:
         return [
-            "not_a_float",          # Type mismatch
-            sys.float_info.max,     # Boundary value
-            -sys.float_info.max,    # Boundary value
-            0.0,                    # Edge case
-            -1.0, 1.0,              # Small floats
-            sys.float_info.max * 2, # Overflow
-            -sys.float_info.max * 2 # Underflow
+            "not_a_float",  # Type mismatch
+            sys.float_info.max,  # Boundary value
+            -sys.float_info.max,  # Boundary value
+            0.0,  # Edge case
+            -1.0,
+            1.0,  # Small floats
+            sys.float_info.max * 2,  # Overflow
+            -sys.float_info.max * 2,  # Underflow
         ]
 
     def fuzz_method(self, method_path: str) -> None:
@@ -201,7 +219,7 @@ class Fuzzer:
         method_name = components[-1]
         class_name = components[-2] if len(components) > 2 else None
         module_name = ".".join(components[:-2])
-        
+
         # Import the module containing the class or function
         module = importlib.import_module(module_name)
 
@@ -209,18 +227,28 @@ class Fuzzer:
             cls = getattr(module, class_name)
             # Check if the class is abstract
             if inspect.isabstract(cls):
-                self.logger.log("debug", f"[!] Skipping abstract class {cls.__name__}. We can do better.")
+                self.logger.log(
+                    "debug",
+                    f"[!] Skipping abstract class {cls.__name__}. We can do better.",
+                )
                 return
-            
+
             # Handle required constructor arguments
             init_signature = inspect.signature(cls.__init__)
             init_params = init_signature.parameters
-            required_args = [p for p in init_params if init_params[p].default == inspect.Parameter.empty and p != 'self']
+            required_args = [
+                p
+                for p in init_params
+                if init_params[p].default == inspect.Parameter.empty and p != "self"
+            ]
 
             if required_args:
-                self.logger.log("debug", f"[!] Skipping class {cls.__name__} due to required constructor arguments: {required_args}. We can do better.")
+                self.logger.log(
+                    "debug",
+                    f"[!] Skipping class {cls.__name__} due to required constructor arguments: {required_args}. We can do better.",
+                )
                 return
-            
+
             # If no required arguments, create an instance
             instance = cls()
             method = getattr(instance, method_name)
@@ -239,10 +267,10 @@ class Fuzzer:
         self.logger.log("debug", f"[!] Evaluating Target:\n\n{source_code}")
 
         for fuzzed_inputs in fuzzed_inputs_sets:
-            test_case = FuzzCase(inputs=fuzzed_inputs, encoded_source=encoded_source)            
+            test_case = FuzzCase(inputs=fuzzed_inputs, encoded_source=encoded_source)
             try:
                 test_case.return_value = method(**fuzzed_inputs)
-            
+
             except Exception as e:
                 test_case.exception = str(e)
                 self.exception_count[type(e).__name__] += 1
@@ -263,14 +291,20 @@ class Fuzzer:
         Print a summary of all unhandled exceptions encountered during fuzzing.
         """
         for exception_type, count in self.exception_count.items():
-            self.logger.log("info", f"[-->] Found New Unhandled Exception: {exception_type}: {count} occurrence(s)")
+            self.logger.log(
+                "info",
+                f"[-->] Found New Unhandled Exception: {exception_type}: {count} occurrence(s)",
+            )
 
     def run(self) -> bool:
         """
         Run the fuzzer on all methods/functions in the test map.
         """
         if not self.has_specific_types:
-            self.logger.log("error", "[-] No defined type annotations found in codebase. Fuzzing skipped.")
+            self.logger.log(
+                "error",
+                "[-] No defined type annotations found in codebase. Fuzzing skipped.",
+            )
             return False
 
         self.logger.log("info", "[+] Begin method/function fuzzing.")

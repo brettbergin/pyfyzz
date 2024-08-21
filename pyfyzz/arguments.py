@@ -20,7 +20,11 @@ class Arguments:
             help="Name of the Python package to analyze.",
         )
         parser.add_argument(
-            "--output_format", "-o", type=str, required=True, help="Output format to use."
+            "--output_format",
+            "-o",
+            type=str,
+            required=True,
+            help="Output format to use.",
         )
         parser.add_argument(
             "--ignore_private",

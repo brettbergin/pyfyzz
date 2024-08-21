@@ -4,7 +4,6 @@ from pyfyzz.analyzer import PythonPackageAnalyzer
 
 
 class TestPyFyzz:
-
     def test_verify_importable_package(self):
         analyzer = PythonPackageAnalyzer()
 

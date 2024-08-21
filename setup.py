@@ -23,10 +23,10 @@ def license():
 
 
 def readme():
-    with open("README.md", 'r') as fp:
+    with open("README.md", "r") as fp:
         content = fp.read()
     return content
-    
+
 
 def entry_points():
     return {"console_scripts": ["pyfyzz = pyfyzz.main:main"]}
