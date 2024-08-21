@@ -106,8 +106,11 @@ def main() -> None:
     """
 
     logger = PyFyzzLogger(name="pyfyzz")
-    logger.log("info", "Starting pyfyzz.")
-    
+    logger.log(
+        "info", 
+        "[+] Starting pyfyzz."
+    )
+
     exporter = FileExporter()
 
     package_name, ignore_private, output_format = valid_user_input(logger)
