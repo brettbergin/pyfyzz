@@ -52,7 +52,8 @@ pip install -e .
 ```
 
 ```bash
-
+$env:PYFYZZ_DB_USERNAME = "someuser" 
+$env:PYFYZZ_DB_PASSWORD = "somepassword" 
 pyfyzz -p pyfyzzexample -o yaml -i
 ```
 

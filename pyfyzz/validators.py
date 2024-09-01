@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-from .logger import PyFyzzLogger
 
 class PyFyzzInputValidator:
-    def __init__(self):
-        self.logger = PyFyzzLogger()
+    def __init__(self, logger):
+        self.logger = logger
 
     def validate_package_name(self, package_name: str) -> bool:
         """

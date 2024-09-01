@@ -5,12 +5,10 @@ import inspect
 import importlib
 
 from .models import ModuleInfo, PackageInfo, ParameterInfo, MethodInfo
-from .logger import PyFyzzLogger
 
 class PythonPackageAnalyzer:
-
-    def __init__(self) -> None:
-        self.logger = PyFyzzLogger()
+    def __init__(self, logger) -> None:
+        self.logger = logger
 
     def verify_importable_package(self, pkg_name: str) -> bool:
         """
@@ -26,7 +24,7 @@ class PythonPackageAnalyzer:
         else:
             self.logger.log(
                 "error",
-                f"[-] Package {pkg_name} is not found in the list of importable modules/packages."
+                f"[-] Package {pkg_name} is not found in the list of importable modules/packages.",
             )
             return False
 
@@ -34,7 +32,7 @@ class PythonPackageAnalyzer:
         self, pkg_name: str, package: importlib.import_module, ignore_private=False
     ) -> PackageInfo:
         """
-        Analyze the contents of a package or module and 
+        Analyze the contents of a package or module and
         return a PackageInfo dataclass with the package contents.
 
         returns: PackageInfo
@@ -52,7 +50,9 @@ class PythonPackageAnalyzer:
 
         return package_info
 
-    def analyze_module(self, module_name: str, module, package_info: PackageInfo, ignore_private: bool) -> None:
+    def analyze_module(
+        self, module_name: str, module, package_info: PackageInfo, ignore_private: bool
+    ) -> None:
         """
         Analyze the classes, methods, and functions within a module and store
         the information in the provided PackageInfo object.
@@ -147,7 +147,7 @@ class PythonPackageAnalyzer:
 
         package_info.modules[module_name] = module_struct.classes
 
-    def run(self, pkg_name: str, ignore_private=False) -> PackageInfo or None: # type: ignore
+    def run(self, pkg_name: str, ignore_private=False) -> PackageInfo or None:  # type: ignore
         """
         Attempt to import and analyze the provided package name, returning
         structured information if successful.

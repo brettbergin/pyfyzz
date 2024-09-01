@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from dataclasses import dataclass, field
+
 from typing import List, Dict, Optional
 
 
@@ -45,7 +46,7 @@ class FuzzCase:
     inputs: Dict[str, any]
     return_value: Optional[any] = None
     exception: Optional[str] = None
-    encoded_source: Optional[str] = None  
+    encoded_source: Optional[str] = None
 
 
 @dataclass
@@ -58,3 +59,12 @@ class MethodResult:
 class FuzzResult:
     name: str
     method_results: List[MethodResult] = field(default_factory=list)
+
+
+@dataclass
+class DBOptions:
+    user: str
+    password: str
+    host: str
+    port: int
+    name: str
