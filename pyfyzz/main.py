@@ -35,7 +35,9 @@ def fuzz_package(logger: PyFyzzLogger, package_info: PackageInfo) -> Fuzzer:
     logger.log("info", "[+] Fuzzing has been completed.")
 
     results_as_dict = FuzzResultSerializer(fuzz_results=fuzzer.fuzz_results).as_dict()
-    results_as_df = FuzzResultSerializer(fuzz_results=fuzzer.fuzz_results).as_dataframe()
+    results_as_df = FuzzResultSerializer(
+        fuzz_results=fuzzer.fuzz_results
+    ).as_dataframe()
     return results_as_dict, results_as_df
 
 
@@ -122,16 +124,14 @@ def main() -> None:
 
     file_exporter = FileExporter(logger=logger)
     db_exporter = DatabaseExporter(
-        db_uri="mysql+mysqlconnector://appuser:meepmeep@localhost:3306/pyfyzz", 
-        logger=logger
+        db_uri="mysql+mysqlconnector://appuser:meepmeep@localhost:3306/pyfyzz",
+        logger=logger,
     )
 
     package_name, ignore_private, output_format = valid_user_input(logger)
 
     pkg_info, pkg_dict, pkg_df = analyze_package(
-        logger, 
-        pkg_name=package_name, 
-        igr_priv=ignore_private
+        logger, pkg_name=package_name, igr_priv=ignore_private
     )
 
     fuzz_results_dict, fuzz_results_df = fuzz_package(logger, package_info=pkg_info)

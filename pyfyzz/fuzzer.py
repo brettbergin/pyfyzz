@@ -113,9 +113,9 @@ class Fuzzer:
                 input_set = {
                     p.name: None for p in parameters
                 }  # Initialize with None for all params
-                input_set[
-                    param.name
-                ] = fuzzed_value  # Set the fuzzed value for the current param
+                input_set[param.name] = (
+                    fuzzed_value  # Set the fuzzed value for the current param
+                )
 
                 # Save this set of fuzzed inputs
                 fuzzed_inputs_sets.append(input_set)
