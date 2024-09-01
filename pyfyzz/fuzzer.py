@@ -278,14 +278,6 @@ class Fuzzer:
 
         self.fuzz_results.method_results.append(method_result)
 
-    def export_results_to_json(self, file_path: str) -> None:
-        with open(file_path, "w") as json_file:
-            json.dump(asdict(self.fuzz_results), json_file, indent=4)
-
-    def export_results_to_yaml(self, file_path: str):
-        with open(file_path, "w") as yaml_file:
-            yaml.dump(asdict(self.fuzz_results), yaml_file, default_flow_style=False)
-
     def summarize_exceptions(self) -> None:
         """
         Print a summary of all unhandled exceptions encountered during fuzzing.

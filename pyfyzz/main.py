@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 
+import pandas as pd
 import sys
 
 from .analyzer import PythonPackageAnalyzer
 from .exporter import FileExporter
+from .exporter import DatabaseExporter
 from .fuzzer import Fuzzer
 from .logger import PyFyzzLogger
 from .arguments import Arguments
 from .validators import PyFyzzInputValidator
 from .models import PackageInfo
-
+from .serializers import PackageInfoSerializer
+from .serializers import FuzzResultSerializer
 from typing import Tuple
 
 
@@ -30,7 +33,10 @@ def fuzz_package(logger: PyFyzzLogger, package_info: PackageInfo) -> Fuzzer:
         sys.exit(-1)
 
     logger.log("info", "[+] Fuzzing has been completed.")
-    return fuzzer
+
+    results_as_dict = FuzzResultSerializer(fuzz_results=fuzzer.fuzz_results).as_dict()
+    results_as_df = FuzzResultSerializer(fuzz_results=fuzzer.fuzz_results).as_dataframe()
+    return results_as_dict, results_as_df
 
 
 def analyze_package(logger: PyFyzzLogger, pkg_name: str, igr_priv: bool) -> PackageInfo:
@@ -62,7 +68,9 @@ def analyze_package(logger: PyFyzzLogger, pkg_name: str, igr_priv: bool) -> Pack
         sys.exit(-1)
     logger.log("info", "[+] Package analysis is complete.")
 
-    return pkg_info
+    pkg_dict = PackageInfoSerializer(package_info=pkg_info).as_dict()
+    pkg_df = PackageInfoSerializer(package_info=pkg_info).as_dataframe()
+    return pkg_info, pkg_dict, pkg_df
 
 
 def valid_user_input(logger: PyFyzzLogger) -> Tuple[str, bool, str]:
@@ -112,24 +120,34 @@ def main() -> None:
     logger = PyFyzzLogger(name="pyfyzz")
     logger.log("info", "[+] Starting pyfyzz.")
 
-    exporter = FileExporter()
+    file_exporter = FileExporter(logger=logger)
+    db_exporter = DatabaseExporter(
+        db_uri="mysql+mysqlconnector://appuser:meepmeep@localhost:3306/pyfyzz", 
+        logger=logger
+    )
 
     package_name, ignore_private, output_format = valid_user_input(logger)
 
-    pkg_info = analyze_package(logger, pkg_name=package_name, igr_priv=ignore_private)
+    pkg_info, pkg_dict, pkg_df = analyze_package(
+        logger, 
+        pkg_name=package_name, 
+        igr_priv=ignore_private
+    )
 
-    fuzzer = fuzz_package(logger, package_info=pkg_info)
+    fuzz_results_dict, fuzz_results_df = fuzz_package(logger, package_info=pkg_info)
 
     if output_format == "json":
-        exporter.export_to_json(pkg_info, f"composition_{package_name}.json")
-        fuzzer.export_results_to_json(f"results_{package_name}.json")
+        file_exporter.export_to_json(pkg_dict, f"composition_{package_name}.json")
+        file_exporter.export_to_json(fuzz_results_dict, f"results_{package_name}.json")
 
     elif output_format == "yaml":
-        exporter.export_to_yaml(pkg_info, f"composition_{package_name}.yaml")
-        fuzzer.export_results_to_yaml(f"results_{package_name}.yaml")
+        file_exporter.export_to_yaml(pkg_dict, f"composition_{package_name}.yaml")
+        file_exporter.export_to_yaml(fuzz_results_dict, f"results_{package_name}.yaml")
+
+    db_exporter.export_to_database(pkg_df, "compositions")
+    db_exporter.export_to_database(fuzz_results_df, "results")
 
     logger.log("info", "[+] Fuzzer results file exportation is complete.")
-
     logger.log("info", "[+] Pyfyzz finished.")
 
     sys.exit(0)
