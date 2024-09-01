@@ -1,24 +1,25 @@
 #!/usr/bin/env python3
 
 import os
-import pandas as pd
 import sys
+import uuid
+from typing import Tuple, Dict
+
+import pandas as pd
 
 from .analyzer import PythonPackageAnalyzer
-from .exporter import FileExporter
-from .exporter import DatabaseExporter
+from .exporter import FileExporter, DatabaseExporter
 from .fuzzer import Fuzzer
 from .logger import PyFyzzLogger
 from .arguments import Arguments
 from .validators import PyFyzzInputValidator
-from .models import PackageInfo
-from .models import DBOptions
-from .serializers import PackageInfoSerializer
-from .serializers import FuzzResultSerializer
-from typing import Tuple
+from .models import PackageInfo, DBOptions
+from .serializers import PackageInfoSerializer, FuzzResultSerializer
 
 
-def fuzz_package(logger: PyFyzzLogger, package_info: PackageInfo) -> Fuzzer:
+def fuzz_package(
+    logger: PyFyzzLogger, package_info: PackageInfo
+) -> Tuple[Dict, pd.DataFrame]:
     """
     Attempts to invoke the package fuzzer against the package info
     data model object we enumerated.
@@ -40,10 +41,12 @@ def fuzz_package(logger: PyFyzzLogger, package_info: PackageInfo) -> Fuzzer:
     results_as_df = FuzzResultSerializer(
         fuzz_results=fuzzer.fuzz_results
     ).as_dataframe()
-    return results_as_dict, results_as_df
+    return (results_as_dict, results_as_df)
 
 
-def analyze_package(logger: PyFyzzLogger, pkg_name: str, igr_priv: bool) -> PackageInfo:
+def analyze_package(
+    logger: PyFyzzLogger, pkg_name: str, igr_priv: bool
+) -> Tuple[PackageInfo, Dict, pd.DataFrame]:
     """
     Enumerates all of the package contents in the given package and returns
     a data model object representing the entire package:
@@ -53,7 +56,7 @@ def analyze_package(logger: PyFyzzLogger, pkg_name: str, igr_priv: bool) -> Pack
     returns: object(PackageInfo) or sys.exit(-1)
     """
 
-    analyzer = PythonPackageAnalyzer()
+    analyzer = PythonPackageAnalyzer(logger=logger)
     importable = analyzer.verify_importable_package(pkg_name)
 
     if not importable:
@@ -86,7 +89,7 @@ def valid_user_input(logger: PyFyzzLogger) -> Tuple[str, bool, str]:
     """
 
     arguments = Arguments()
-    validator = PyFyzzInputValidator()
+    validator = PyFyzzInputValidator(logger=logger)
 
     args = arguments.parse_arguments()
 
@@ -115,7 +118,7 @@ def valid_user_input(logger: PyFyzzLogger) -> Tuple[str, bool, str]:
     return (package_name, ignore_private, output_format)
 
 
-def publish_to_database(logger, pkg_df, fr_df):
+def publish_to_database(logger, pkg_df: pd.DataFrame, fr_df: pd.DataFrame, batch_job_id: str) -> None:
     """ """
     db_user = os.environ.get("PYFYZZ_DB_USERNAME")
     if not db_user:
@@ -143,6 +146,9 @@ def publish_to_database(logger, pkg_df, fr_df):
         logger=logger,
     )
 
+    pkg_df['batch_job_id'] = batch_job_id  # Add batch_job_id column to pkg_df
+    fr_df['batch_job_id'] = batch_job_id  # Add batch_job_id column to fr_df
+
     logger.log("info", "[+] Preparing to add package info to database.")
     db_exporter.export_to_database(pkg_df, "compositions")
 
@@ -156,8 +162,10 @@ def main() -> None:
     and performs the analysis and export.
     """
 
-    logger = PyFyzzLogger(name="pyfyzz")
+    logger = PyFyzzLogger(name="pyfyzz", level="debug")
     logger.log("info", "[+] Starting pyfyzz.")
+    
+    batch_job_id = str(uuid.uuid4()) 
 
     file_exporter = FileExporter(logger=logger)
 
@@ -177,7 +185,7 @@ def main() -> None:
         file_exporter.export_to_yaml(pkg_dict, f"composition_{package_name}.yaml")
         file_exporter.export_to_yaml(fuzz_results_dict, f"results_{package_name}.yaml")
 
-    publish_to_database(logger, pkg_df, fuzz_results_df)
+    publish_to_database(logger, pkg_df, fuzz_results_df, batch_job_id)
 
     logger.log("info", "[+] Fuzzer results file exportation is complete.")
     logger.log("info", "[+] Pyfyzz finished.")

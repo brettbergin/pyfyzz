@@ -5,12 +5,10 @@ import inspect
 import importlib
 
 from .models import ModuleInfo, PackageInfo, ParameterInfo, MethodInfo
-from .logger import PyFyzzLogger
-
 
 class PythonPackageAnalyzer:
-    def __init__(self) -> None:
-        self.logger = PyFyzzLogger()
+    def __init__(self, logger) -> None:
+        self.logger = logger
 
     def verify_importable_package(self, pkg_name: str) -> bool:
         """

@@ -2,36 +2,18 @@
 
 import os
 import json
-import pandas as pd
-from sqlalchemy import (
-    create_engine,
-    inspect,
-    text,
-    MetaData,
-    Table,
-    Column,
-    String,
-    Integer,
-    Float,
-    Boolean,
-    DateTime,
-    JSON,
-    Text,
-)
-from sqlalchemy.dialects.mysql import VARCHAR
-import pandas as pd
 import uuid
+
 import yaml
+import pandas as pd
+from sqlalchemy import create_engine, inspect, text
 
 from .logger import PyFyzzLogger
 
 
 class FileExporter:
     def __init__(self, logger) -> None:
-        if not logger:
-            self.logger = PyFyzzLogger()
-        else:
-            self.logger = logger
+        self.logger = logger
 
     def _check_file_exists(self, f):
         if os.path.exists(f):
@@ -96,12 +78,18 @@ class DatabaseExporter:
                 f"[-] DataFrame is empty. No data to export to table '{table_name}'.",
             )
             return
+        
+        if 'batch_job_id' not in df.columns:
+            self.logger.log("error", "[-] batch_job_id column is missing. Quitting.")
+            return
 
-        if "id" not in df.columns:
-            df["id"] = [str(uuid.uuid4()) for _ in range(len(df))]
+        table_row_identifier = "record_id"
+
+        if table_row_identifier not in df.columns:
+            df[table_row_identifier] = [str(uuid.uuid4()) for _ in range(len(df))]
 
         for col in df.columns:
-            if col == "id":
+            if col == table_row_identifier:
                 continue
 
             if df[col].apply(lambda x: isinstance(x, (dict, list, object))).any():
@@ -114,9 +102,22 @@ class DatabaseExporter:
             self.logger.log(
                 "info", f"[+] Creating table '{table_name}' in the database."
             )
+            # If table does not exist, create it with appropriate data types
+            df.head(0).to_sql(table_name, con=self.engine, if_exists='fail', index=False)
 
         try:
             df.to_sql(table_name, con=self.engine, if_exists="append", index=False)
+            primary_key_columns = inspector.get_pk_constraint(table_name).get('constrained_columns', [])
+
+            if not len(primary_key_columns) > 0:
+                self.logger.log("debug", f"[!] No primary keys found on table {table_name}. Adding: {primary_key_columns} as primary key.")
+                with self.engine.connect() as connection:
+                    connection.execute(text(f"ALTER TABLE {table_name} MODIFY {table_row_identifier} CHAR(36);"))
+                    connection.execute(text(f"ALTER TABLE {table_name} ADD PRIMARY KEY ({table_row_identifier});"))
+
+            else:
+                self.logger.log("info", f"[+] Primary Key: {primary_key_columns} exists on table: {table_name}")
+
             self.logger.log(
                 "info",
                 f"[+] Data successfully exported to table '{table_name}' in the database.",

@@ -1,8 +1,9 @@
+#!/usr/bin/env python3
+
 import json
 import pandas as pd
 
-from .models import PackageInfo
-from .models import FuzzResult
+from .models import PackageInfo, FuzzResult
 
 
 class PackageInfoSerializer:
