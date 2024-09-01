@@ -79,9 +79,8 @@ class PackageInfoSerializer:
 
         return flattened_list
 
-    def as_dataframe(self):
-        df = pd.DataFrame(self.as_flattened_dict())
-        return df
+    def as_dataframe(self) -> pd.DataFrame:
+        return pd.DataFrame(self.as_flattened_dict())
 
 
 class FuzzResultSerializer:
@@ -131,7 +130,7 @@ class FuzzResultSerializer:
 
         return flattened_list
 
-    def as_dataframe(self):
+    def as_dataframe(self) -> pd.DataFrame:
         df = pd.DataFrame(self.as_flattened_dict())
 
         if "exception" in df.columns:
