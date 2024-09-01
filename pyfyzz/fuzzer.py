@@ -264,8 +264,6 @@ class Fuzzer:
         source_code = inspect.getsource(method)
         encoded_source = base64.b64encode(source_code.encode()).decode()
 
-        self.logger.log("debug", f"[!] Evaluating Target:\n\n{source_code}")
-
         for fuzzed_inputs in fuzzed_inputs_sets:
             test_case = FuzzCase(inputs=fuzzed_inputs, encoded_source=encoded_source)
             try:

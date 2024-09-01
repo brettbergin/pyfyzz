@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import pandas as pd
 import sys
 
@@ -11,6 +12,7 @@ from .logger import PyFyzzLogger
 from .arguments import Arguments
 from .validators import PyFyzzInputValidator
 from .models import PackageInfo
+from .models import DBOptions
 from .serializers import PackageInfoSerializer
 from .serializers import FuzzResultSerializer
 from typing import Tuple
@@ -113,6 +115,41 @@ def valid_user_input(logger: PyFyzzLogger) -> Tuple[str, bool, str]:
     return (package_name, ignore_private, output_format)
 
 
+def publish_to_database(logger, pkg_df, fr_df):
+    """ """
+    db_user = os.environ.get("PYFYZZ_DB_USERNAME")
+    if not db_user:
+        logger.log(
+            "error", "[-] Unable to obtain pyfyzz db username from env vars. quitting."
+        )
+        sys.exit(-1)
+
+    db_passwd = os.environ.get("PYFYZZ_DB_PASSWORD")
+    if not db_passwd:
+        logger.log(
+            "error", "[-] Unable to obtain pyfyzz db password from env vars. quitting."
+        )
+        sys.exit(-1)
+
+    db = DBOptions(
+        user=db_user, password=db_passwd, host="localhost", port=3306, name="pyfyzz"
+    )
+    conn_string = (
+        f"mysql+mysqlconnector://{db.user}:{db.password}@{db.host}:{db.port}/{db.name}"
+    )
+
+    db_exporter = DatabaseExporter(
+        db_uri=conn_string,
+        logger=logger,
+    )
+
+    logger.log("info", "[+] Preparing to add package info to database.")
+    db_exporter.export_to_database(pkg_df, "compositions")
+
+    logger.log("info", "[+] Preparing to add fuzz results to database.")
+    db_exporter.export_to_database(fr_df, "results")
+
+
 def main() -> None:
     """
     Main entry point for the script. Parses arguments, verifies the package,
@@ -123,10 +160,6 @@ def main() -> None:
     logger.log("info", "[+] Starting pyfyzz.")
 
     file_exporter = FileExporter(logger=logger)
-    db_exporter = DatabaseExporter(
-        db_uri="mysql+mysqlconnector://appuser:meepmeep@localhost:3306/pyfyzz",
-        logger=logger,
-    )
 
     package_name, ignore_private, output_format = valid_user_input(logger)
 
@@ -144,8 +177,7 @@ def main() -> None:
         file_exporter.export_to_yaml(pkg_dict, f"composition_{package_name}.yaml")
         file_exporter.export_to_yaml(fuzz_results_dict, f"results_{package_name}.yaml")
 
-    db_exporter.export_to_database(pkg_df, "compositions")
-    db_exporter.export_to_database(fuzz_results_df, "results")
+    publish_to_database(logger, pkg_df, fuzz_results_df)
 
     logger.log("info", "[+] Fuzzer results file exportation is complete.")
     logger.log("info", "[+] Pyfyzz finished.")

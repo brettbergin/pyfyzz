@@ -120,7 +120,7 @@ class FuzzResultSerializer:
                         "package_name": self.fuzz_results.name,
                         "method_name": method_result.method_name,
                         "inputs": json.dumps(fuzz_case.inputs),
-                        "return_value": fuzz_case.return_value,
+                        # "return_value": fuzz_case.return_value,
                         "exception": (
                             str(fuzz_case.exception) if fuzz_case.exception else None
                         ),

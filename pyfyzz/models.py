@@ -58,3 +58,12 @@ class MethodResult:
 class FuzzResult:
     name: str
     method_results: List[MethodResult] = field(default_factory=list)
+
+
+@dataclass
+class DBOptions:
+    user: str
+    password: str
+    host: str
+    port: int
+    name: str

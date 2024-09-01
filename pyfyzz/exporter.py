@@ -2,9 +2,25 @@
 
 import os
 import json
-from sqlalchemy import create_engine, inspect
 import pandas as pd
-
+from sqlalchemy import (
+    create_engine,
+    inspect,
+    text,
+    MetaData,
+    Table,
+    Column,
+    String,
+    Integer,
+    Float,
+    Boolean,
+    DateTime,
+    JSON,
+    Text,
+)
+from sqlalchemy.dialects.mysql import VARCHAR
+import pandas as pd
+import uuid
 import yaml
 
 from .logger import PyFyzzLogger
@@ -74,7 +90,6 @@ class DatabaseExporter:
         :param df: The DataFrame to be exported.
         :param table_name: The name of the table to which the data will be exported.
         """
-
         if df.empty:
             self.logger.log(
                 "error",
@@ -82,7 +97,13 @@ class DatabaseExporter:
             )
             return
 
+        if "id" not in df.columns:
+            df["id"] = [str(uuid.uuid4()) for _ in range(len(df))]
+
         for col in df.columns:
+            if col == "id":
+                continue
+
             if df[col].apply(lambda x: isinstance(x, (dict, list, object))).any():
                 df[col] = df[col].apply(
                     lambda x: json.dumps(x) if isinstance(x, (dict, list)) else str(x)
