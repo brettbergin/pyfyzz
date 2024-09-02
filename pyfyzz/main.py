@@ -32,7 +32,7 @@ def fuzz_package(
     returns: Fuzzer or sys.exit(-1)
     """
 
-    fuzzer = Fuzzer(package_under_test=package_info)
+    fuzzer = Fuzzer(logger=logger, package_under_test=package_info)
     ran = fuzzer.run()
     if not ran:
         logger.log(
@@ -195,7 +195,7 @@ def main() -> None:
     """
     start_time = datetime.datetime.now()
 
-    logger = PyFyzzLogger(name="pyfyzz", level="debug")
+    logger = PyFyzzLogger(name="pyfyzz", level="info")
     logger.log("info", f"[+] Starting pyfyzz @: {start_time}.")
     
     file_exporter = FileExporter(logger=logger)
