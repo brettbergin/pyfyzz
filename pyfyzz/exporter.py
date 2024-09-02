@@ -8,20 +8,14 @@ import datetime
 import yaml
 import pandas as pd
 from sqlalchemy import create_engine, ForeignKey
-from sqlalchemy import (
-    String,
-    DateTime,
-    Column,
-    CHAR,
-    Text,
-    Integer
-)
+from sqlalchemy import String, DateTime, Column, CHAR, Text, Integer
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 from .logger import PyFyzzLogger
 
 Base = declarative_base()
+
 
 class FileExporter:
     def __init__(self, logger) -> None:
@@ -69,7 +63,7 @@ class FileExporter:
 
 
 class BatchJob(Base):
-    __tablename__ = 'batches'
+    __tablename__ = "batches"
 
     batch_job_id = Column(CHAR(36), primary_key=True, unique=True)
     package_name = Column(String(255), nullable=False)
@@ -81,26 +75,31 @@ class BatchJob(Base):
 
     fuzz_results = relationship("FuzzResults", back_populates="batch_job")
     topologies = relationship("PackageTopology", back_populates="batch_job")
-    batch_summaries = relationship("BatchSummaries", back_populates="batch_job")  # Added relationship to BatchSummaries
+    batch_summaries = relationship(
+        "BatchSummaries", back_populates="batch_job"
+    )  # Added relationship to BatchSummaries
+
 
 class BatchSummaries(Base):
-    __tablename__ = 'batch_summaries'
+    __tablename__ = "batch_summaries"
 
     batch_summary_id = Column(CHAR(36), primary_key=True, unique=True)
-    batch_job_id = Column(CHAR(36), ForeignKey('batches.batch_job_id'))
+    batch_job_id = Column(CHAR(36), ForeignKey("batches.batch_job_id"))
     package_name = Column(String(255), nullable=False)
     exception_type = Column(String(255), nullable=False)
     exception_occurences = Column(Integer, nullable=True)
     exception_occurences_date = Column(DateTime, nullable=True)
 
-    batch_job = relationship("BatchJob", back_populates="batch_summaries")  # Corrected back_populates to match BatchJob
+    batch_job = relationship(
+        "BatchJob", back_populates="batch_summaries"
+    )  # Corrected back_populates to match BatchJob
 
 
 class FuzzResults(Base):
-    __tablename__ = 'fuzz_results'
+    __tablename__ = "fuzz_results"
 
     record_id = Column(CHAR(36), primary_key=True, unique=True)
-    batch_job_id = Column(CHAR(36), ForeignKey('batches.batch_job_id'))
+    batch_job_id = Column(CHAR(36), ForeignKey("batches.batch_job_id"))
     package_name = Column(String(255), nullable=False)
     method_name = Column(String(255), nullable=False)
     inputs = Column(Text, nullable=True)
@@ -111,10 +110,10 @@ class FuzzResults(Base):
 
 
 class PackageTopology(Base):
-    __tablename__ = 'topologies'
+    __tablename__ = "topologies"
 
     record_id = Column(CHAR(36), primary_key=True, unique=True)
-    batch_job_id = Column(CHAR(36), ForeignKey('batches.batch_job_id'))
+    batch_job_id = Column(CHAR(36), ForeignKey("batches.batch_job_id"))
     package_name = Column(String(255), nullable=True)
     module_name = Column(String(255), nullable=True)
     class_name = Column(String(255), nullable=True)
@@ -127,11 +126,12 @@ class PackageTopology(Base):
 
     batch_job = relationship("BatchJob", back_populates="topologies")
 
+
 class DatabaseExporter:
     def __init__(self, db_uri: str, logger: PyFyzzLogger = None) -> None:
         """
         Initialize the DatabaseExporter with a database URI and optional logger.
-        """        
+        """
         self.logger = logger if logger else PyFyzzLogger()
 
         self._engine = create_engine(db_uri)
@@ -143,16 +143,16 @@ class DatabaseExporter:
     def setup_database(self):
         Base.metadata.create_all(self._engine)
 
-    def start_new_batch(self, 
-                        batch_job_id, 
-                        package_name, 
-                        start_time, 
-                        at_risk_count,
-                        stop_time=None,  
-                        batch_status='running'
-        ) -> None:
-        """
-        """
+    def start_new_batch(
+        self,
+        batch_job_id,
+        package_name,
+        start_time,
+        at_risk_count,
+        stop_time=None,
+        batch_status="running",
+    ) -> None:
+        """ """
         new_batch_job = BatchJob(
             batch_job_id=batch_job_id,
             package_name=package_name,
@@ -160,7 +160,7 @@ class DatabaseExporter:
             stop_time=stop_time,
             at_risk_methods=at_risk_count,
             at_risk_methods_date=datetime.datetime.now(),
-            batch_status=batch_status
+            batch_status=batch_status,
         )
         self.session.add(new_batch_job)
         self.session.commit()
@@ -168,7 +168,7 @@ class DatabaseExporter:
     def update_job_complete(self, batch_job_id, stop_time, batch_status):
         """
         Update the batch job with the given ID to mark its completion.
-        
+
         :param batch_job_id: The unique identifier of the batch job to update.
         :param stop_time: The time the batch job was completed.
         :param status: The status to set for the batch job.
@@ -179,11 +179,9 @@ class DatabaseExporter:
             batch_job.batch_status = batch_status
             batch_job.stop_time = stop_time
             self.session.commit()
-    
+
     def insert_batch_summary(self, counts, batch_job_id, pkg_name):
-        """
-        
-        """
+        """ """
         for exception_type, exception_occurences in counts.items():
             new_batch_summary = BatchSummaries(
                 batch_summary_id=str(uuid.uuid4()),
@@ -192,12 +190,11 @@ class DatabaseExporter:
                 exception_type=exception_type,
                 exception_occurences=exception_occurences,
                 exception_occurences_date=datetime.datetime.now(),
-
             )
             self.session.add(new_batch_summary)
-        self.session.commit()        
+        self.session.commit()
         return
-    
+
     def export_to_database(self, df: pd.DataFrame, table_name: str) -> None:
         """
         Export the given DataFrame to a SQL database.
@@ -211,8 +208,8 @@ class DatabaseExporter:
                 f"[-] DataFrame is empty. No data to export to table '{table_name}'.",
             )
             return
-        
-        if 'batch_job_id' not in df.columns:
+
+        if "batch_job_id" not in df.columns:
             self.logger.log("error", "[-] batch_job_id column is missing. Quitting.")
             return
 

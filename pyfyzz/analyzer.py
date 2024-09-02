@@ -6,6 +6,7 @@ import importlib
 
 from .models import ModuleInfo, PackageInfo, ParameterInfo, MethodInfo
 
+
 class PythonPackageAnalyzer:
     def __init__(self, logger) -> None:
         self.logger = logger
