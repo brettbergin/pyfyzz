@@ -13,6 +13,7 @@ from typing import Dict, List
 
 from .models import FuzzResult, MethodResult, FuzzCase
 from .logger import PyFyzzLogger
+from .exporter import DatabaseExporter
 
 
 class Fuzzer:
