@@ -3,13 +3,17 @@
 import os
 import sys
 import uuid
+import json
+
 from typing import Tuple, Dict
 import datetime
 
 import pandas as pd
+import requests
 
 from .analyzer import PythonPackageAnalyzer
-from .exporter import FileExporter, DatabaseExporter
+from .exports import FileExporter
+from .databases import DatabaseExporter
 from .fuzzer import Fuzzer
 from .logger import PyFyzzLogger
 from .arguments import Arguments
@@ -126,7 +130,7 @@ def publish_to_database(
     pkg_df: pd.DataFrame,
     fr_df: pd.DataFrame,
     batch_job_id: str,
-    at_risk_count: int,
+    discovered_methods: int,
 ) -> None:
     """ """
     db_user = os.environ.get("PYFYZZ_DB_USERNAME")
@@ -154,17 +158,27 @@ def publish_to_database(
         db_uri=conn_string,
         logger=logger,
     )
+
+    url = f"https://pypi.org/pypi/{pkg_name}/json"
+    r = requests.get(url)
+
+    if r.status_code in(200, 201, 202):
+        resp_json = json.loads(r.content)
+        db_exporter.add_pip_package(data=resp_json)
+    else:
+        logger.log("error", "[-] Unable to find package information in pypi.")
+
     db_exporter.start_new_batch(
         batch_job_id,
         pkg_name,
         start_time=start_t,
         stop_time=None,
-        at_risk_count=at_risk_count,
+        discovered_methods_count=discovered_methods,
         batch_status="running",
     )
 
-    pkg_df["batch_job_id"] = batch_job_id  # Add batch_job_id column to pkg_df
-    fr_df["batch_job_id"] = batch_job_id  # Add batch_job_id column to fr_df
+    pkg_df["batch_job_id"] = batch_job_id 
+    fr_df["batch_job_id"] = batch_job_id
 
     logger.log("info", "[+] Preparing to add package info to database.")
     db_exporter.export_to_database(pkg_df, "topologies")
@@ -180,11 +194,13 @@ def main() -> None:
     and performs the analysis and export.
     """
     start_time = datetime.datetime.now()
-    batch_job_id = str(uuid.uuid4())
 
     logger = PyFyzzLogger(name="pyfyzz", level="debug")
     logger.log("info", f"[+] Starting pyfyzz @: {start_time}.")
+    
     file_exporter = FileExporter(logger=logger)
+
+    batch_job_id = str(uuid.uuid4())
 
     package_name, ignore_private, output_format = valid_user_input(logger)
 
@@ -207,7 +223,7 @@ def main() -> None:
         start_t=start_time,
         pkg_df=pkg_df,
         fr_df=fuzz_results_df,
-        at_risk_count=fuzzed_method_count,
+        discovered_methods=fuzzed_method_count,
     )
 
     db_exporter.insert_batch_summary(
