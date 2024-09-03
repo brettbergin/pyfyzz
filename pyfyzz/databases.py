@@ -90,9 +90,10 @@ class DatabaseExporter:
         self.session.commit()
         return
 
-    def add_pip_package(self, data: dict):
+    def add_pip_package(self, data: dict, batch_job_id: str):
         package_info = PackageInfoSQL(
             name=data["info"]["name"],
+            batch_job_id=batch_job_id,
             version=data["info"]["version"],
             author=data["info"]["author"],
             author_email=data["info"]["author_email"],

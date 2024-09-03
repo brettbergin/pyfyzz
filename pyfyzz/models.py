@@ -144,6 +144,7 @@ class DBOptions:
 # SQLAlchemy ORM Models
 
 # Object for the batches table in db.
+# Object for the batches table in db.
 class BatchJob(Base):
     __tablename__ = "batches"
 
@@ -158,6 +159,7 @@ class BatchJob(Base):
     fuzz_results = relationship("FuzzResults", back_populates="batch_job")
     topologies = relationship("PackageTopology", back_populates="batch_job")
     batch_summaries = relationship("BatchSummaries", back_populates="batch_job")
+    package_info = relationship("PackageInfoSQL", back_populates="batch_job")
 
 # Object for the batch_summaries table in db.
 class BatchSummaries(Base):
@@ -209,6 +211,8 @@ class PackageInfoSQL(Base):
     __tablename__ = "package_info"
 
     id = Column(CHAR(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True)
+    batch_job_id = Column(CHAR(36), ForeignKey("batches.batch_job_id"))
+
     name = Column(String(255), nullable=False)
     version = Column(String(50), nullable=False)
     author = Column(String(255), nullable=True)
@@ -228,6 +232,7 @@ class PackageInfoSQL(Base):
 
     release_files = relationship("ReleaseFile", back_populates="package_info")
     vulnerabilities = relationship("Vulnerabilities", back_populates="package_info")
+    batch_job = relationship("BatchJob", back_populates="package_info")
 
 # Object for the release_files table in db.
 class ReleaseFile(Base):

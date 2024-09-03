@@ -158,16 +158,7 @@ def publish_to_database(
         db_uri=conn_string,
         logger=logger,
     )
-
-    url = f"https://pypi.org/pypi/{pkg_name}/json"
-    r = requests.get(url)
-
-    if r.status_code in(200, 201, 202):
-        resp_json = json.loads(r.content)
-        db_exporter.add_pip_package(data=resp_json)
-    else:
-        logger.log("error", "[-] Unable to find package information in pypi.")
-
+    
     db_exporter.start_new_batch(
         batch_job_id,
         pkg_name,
@@ -176,6 +167,16 @@ def publish_to_database(
         discovered_methods_count=discovered_methods,
         batch_status="running",
     )
+
+    url = f"https://pypi.org/pypi/{pkg_name}/json"
+    r = requests.get(url)
+
+    if r.status_code in(200, 201, 202):
+        resp_json = json.loads(r.content)
+        db_exporter.add_pip_package(data=resp_json, batch_job_id=batch_job_id)
+    else:
+        logger.log("error", "[-] Unable to find package information in pypi.")
+
 
     pkg_df["batch_job_id"] = batch_job_id 
     fr_df["batch_job_id"] = batch_job_id

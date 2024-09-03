@@ -104,7 +104,7 @@ class Fuzzer:
             fuzzed_values = self.fuzz_parameter(param.param_type)
 
             self.logger.log(
-                "info",
+                "debug",
                 f"[+] Testing parameter: {param.name} with {len(fuzzed_values)} permutations.",
             )
             for fuzzed_value in fuzzed_values:
