@@ -9,14 +9,14 @@ import pandas as pd
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import (
-    Column, 
-    String, 
-    Integer, 
-    DateTime, 
-    Text, 
-    ForeignKey, 
-    CHAR, 
-    Boolean
+    Column,
+    String,
+    Integer,
+    DateTime,
+    Text,
+    ForeignKey,
+    CHAR,
+    Boolean,
 )
 
 
@@ -34,6 +34,7 @@ class ParameterInfo:
     def as_dict(self):
         return asdict(self)
 
+
 # Dataclass for package analysis
 @dataclass
 class MethodInfo:
@@ -44,6 +45,7 @@ class MethodInfo:
     def as_dict(self):
         return asdict(self)
 
+
 # Dataclass for package analysis
 @dataclass
 class ClassInfo:
@@ -52,6 +54,7 @@ class ClassInfo:
 
     def as_dict(self):
         return asdict(self)
+
 
 # Dataclass for package analysis
 @dataclass
@@ -63,11 +66,14 @@ class ModuleInfo:
     def as_dict(self):
         return asdict(self)
 
+
 # Dataclass for package analysis
 @dataclass
 class PackageInfo:
     name: str
-    modules: Dict[str, Dict[str, Dict[str, List[ParameterInfo]]]] = field(default_factory=dict)
+    modules: Dict[str, Dict[str, Dict[str, List[ParameterInfo]]]] = field(
+        default_factory=dict
+    )
 
     def as_dict(self):
         return asdict(self)
@@ -78,17 +84,20 @@ class PackageInfo:
             for class_name, class_info in module_info.items():
                 for method_name, method_info in class_info.items():
                     for param in method_info.parameters:
-                        flattened_list.append({
-                            'module_name': module_name,
-                            'class_name': class_name,
-                            'method_name': method_name,
-                            'param_name': param.name,
-                            'param_kind': param.kind,
-                            'param_default': param.default,
-                            'param_type': param.param_type,
-                            'return_type': method_info.return_type
-                        })
+                        flattened_list.append(
+                            {
+                                "module_name": module_name,
+                                "class_name": class_name,
+                                "method_name": method_name,
+                                "param_name": param.name,
+                                "param_kind": param.kind,
+                                "param_default": param.default,
+                                "param_type": param.param_type,
+                                "return_type": method_info.return_type,
+                            }
+                        )
         return pd.DataFrame(flattened_list)
+
 
 # Dataclass for fuzzing results
 @dataclass
@@ -101,6 +110,7 @@ class FuzzCase:
     def as_dict(self):
         return asdict(self)
 
+
 # Dataclass for fuzzing results
 @dataclass
 class MethodResult:
@@ -109,6 +119,7 @@ class MethodResult:
 
     def as_dict(self):
         return asdict(self)
+
 
 # Dataclass for fuzzing results
 @dataclass
@@ -123,14 +134,17 @@ class FuzzResult:
         flattened_list = []
         for method_result in self.method_results:
             for test_case in method_result.test_cases:
-                flattened_list.append({
-                    'method_name': method_result.method_name,
-                    'inputs': test_case.inputs,
-                    'return_value': test_case.return_value,
-                    'exception': test_case.exception,
-                    'encoded_source': test_case.encoded_source
-                })
+                flattened_list.append(
+                    {
+                        "method_name": method_result.method_name,
+                        "inputs": test_case.inputs,
+                        "return_value": test_case.return_value,
+                        "exception": test_case.exception,
+                        "encoded_source": test_case.encoded_source,
+                    }
+                )
         return pd.DataFrame(flattened_list)
+
 
 # Dataclass for database configuration
 @dataclass
@@ -141,7 +155,9 @@ class DBOptions:
     port: int
     name: str
 
+
 # SQLAlchemy ORM Models
+
 
 # Object for the batches table in db.
 # Object for the batches table in db.
@@ -161,6 +177,7 @@ class BatchJob(Base):
     batch_summaries = relationship("BatchSummaries", back_populates="batch_job")
     package_info = relationship("PackageInfoSQL", back_populates="batch_job")
 
+
 # Object for the batch_summaries table in db.
 class BatchSummaries(Base):
     __tablename__ = "batch_summaries"
@@ -173,6 +190,7 @@ class BatchSummaries(Base):
     exception_occurences_date = Column(DateTime, nullable=True)
 
     batch_job = relationship("BatchJob", back_populates="batch_summaries")
+
 
 # Object for the fuzz_results table in db.
 class FuzzResults(Base):
@@ -187,6 +205,7 @@ class FuzzResults(Base):
     encoded_source = Column(Text, nullable=True)
 
     batch_job = relationship("BatchJob", back_populates="fuzz_results")
+
 
 # Object for the topologies table in db.
 class PackageTopology(Base):
@@ -206,11 +225,14 @@ class PackageTopology(Base):
 
     batch_job = relationship("BatchJob", back_populates="topologies")
 
+
 # Object for the package_info table in db.
 class PackageInfoSQL(Base):
     __tablename__ = "package_info"
 
-    id = Column(CHAR(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True)
+    id = Column(
+        CHAR(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True
+    )
     batch_job_id = Column(CHAR(36), ForeignKey("batches.batch_job_id"))
 
     name = Column(String(255), nullable=False)
@@ -234,11 +256,14 @@ class PackageInfoSQL(Base):
     vulnerabilities = relationship("Vulnerabilities", back_populates="package_info")
     batch_job = relationship("BatchJob", back_populates="package_info")
 
+
 # Object for the release_files table in db.
 class ReleaseFile(Base):
     __tablename__ = "release_files"
 
-    id = Column(CHAR(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True)
+    id = Column(
+        CHAR(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True
+    )
     comment_text = Column(Text, nullable=True)
     downloads = Column(Integer, nullable=True)
     filename = Column(String(255), nullable=False)
@@ -258,11 +283,14 @@ class ReleaseFile(Base):
     package_info = relationship("PackageInfoSQL", back_populates="release_files")
     digests = relationship("Digests", uselist=False, back_populates="release_file")
 
+
 # Object for the digests table in db.
 class Digests(Base):
     __tablename__ = "digests"
 
-    id = Column(CHAR(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True)
+    id = Column(
+        CHAR(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True
+    )
     blake2b_256 = Column(String(255), nullable=True)
     md5 = Column(String(255), nullable=True)
     sha256 = Column(String(255), nullable=True)
@@ -270,11 +298,14 @@ class Digests(Base):
 
     release_file = relationship("ReleaseFile", back_populates="digests")
 
+
 # Object for the vulnerabilities table in db.
 class Vulnerabilities(Base):
     __tablename__ = "vulnerabilities"
 
-    id = Column(CHAR(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True)
+    id = Column(
+        CHAR(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True
+    )
     vulnerability_type = Column(String(255), nullable=True)  # Example field
     severity = Column(String(50), nullable=True)  # Example field
     package_info_id = Column(CHAR(36), ForeignKey("package_info.id"))

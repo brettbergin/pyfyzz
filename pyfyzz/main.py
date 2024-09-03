@@ -158,7 +158,7 @@ def publish_to_database(
         db_uri=conn_string,
         logger=logger,
     )
-    
+
     db_exporter.start_new_batch(
         batch_job_id,
         pkg_name,
@@ -171,14 +171,13 @@ def publish_to_database(
     url = f"https://pypi.org/pypi/{pkg_name}/json"
     r = requests.get(url)
 
-    if r.status_code in(200, 201, 202):
+    if r.status_code in (200, 201, 202):
         resp_json = json.loads(r.content)
         db_exporter.add_pip_package(data=resp_json, batch_job_id=batch_job_id)
     else:
         logger.log("error", "[-] Unable to find package information in pypi.")
 
-
-    pkg_df["batch_job_id"] = batch_job_id 
+    pkg_df["batch_job_id"] = batch_job_id
     fr_df["batch_job_id"] = batch_job_id
 
     logger.log("info", "[+] Preparing to add package info to database.")
@@ -198,7 +197,7 @@ def main() -> None:
 
     logger = PyFyzzLogger(name="pyfyzz", level="info")
     logger.log("info", f"[+] Starting pyfyzz @: {start_time}.")
-    
+
     file_exporter = FileExporter(logger=logger)
 
     batch_job_id = str(uuid.uuid4())

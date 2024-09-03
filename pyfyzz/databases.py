@@ -16,7 +16,7 @@ from .models import (
     ReleaseFile,
     Digests,
     Vulnerabilities,
-    Base
+    Base,
 )
 
 
@@ -104,7 +104,7 @@ class DatabaseExporter:
             summary=data["info"]["summary"],
             keywords=data["info"]["keywords"],
             yanked=data["info"]["yanked"],
-            yanked_reason=data["info"]["yanked_reason"]
+            yanked_reason=data["info"]["yanked_reason"],
         )
         for version, release_list in data["releases"].items():
             for release in release_list:
@@ -123,17 +123,16 @@ class DatabaseExporter:
                     yanked=release.get("yanked", False),
                     yanked_reason=release.get("yanked_reason", None),
                     version=version,
-                    package_info=package_info  # Associate with the main PackageInfoSQL object
+                    package_info=package_info,  # Associate with the main PackageInfoSQL object
                 )
 
                 digests = Digests(
                     blake2b_256=release["digests"].get("blake2b_256"),
                     md5=release["digests"].get("md5"),
-                    sha256=release["digests"].get("sha256")
+                    sha256=release["digests"].get("sha256"),
                 )
                 release_file.digests = digests
                 package_info.release_files.append(release_file)
-
 
         for vulnerability in data.get("vulnerabilities", []):
             vulnerability_obj = Vulnerabilities(

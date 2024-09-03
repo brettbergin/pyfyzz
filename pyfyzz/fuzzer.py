@@ -21,7 +21,7 @@ class Fuzzer:
         self.has_specific_types = self._check_for_specific_types()
         self.exception_count = defaultdict(int)
         self.fuzz_results = FuzzResult(name=package_under_test.name)
-        
+
     def _check_for_specific_types(self) -> bool:
         """
         Check if any method in the package has a parameter type other than "Any".
