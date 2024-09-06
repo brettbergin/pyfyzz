@@ -158,8 +158,6 @@ class DBOptions:
 
 # SQLAlchemy ORM Models
 
-
-# Object for the batches table in db.
 # Object for the batches table in db.
 class BatchJob(Base):
     __tablename__ = "batches"
@@ -250,7 +248,9 @@ class PackageInfoSQL(Base):
     download_count_last_day = Column(Integer, nullable=True)
     download_count_last_week = Column(Integer, nullable=True)
     download_count_last_month = Column(Integer, nullable=True)
+
     project_url = Column(String(255), nullable=True)
+    project_urls = Column(Text, nullable=True)
 
     release_files = relationship("ReleaseFile", back_populates="package_info")
     vulnerabilities = relationship("Vulnerabilities", back_populates="package_info")
