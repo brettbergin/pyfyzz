@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-from pyfyzz.models import FuzzCase
+from pyfyzz.models.data_models import FuzzCase
 
 
 class TestCaseSerializer:

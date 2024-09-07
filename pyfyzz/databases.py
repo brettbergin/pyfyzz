@@ -9,10 +9,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from .logger import PyFyzzLogger
-from .models import (
+
+from .models.orm_models import (
     BatchJob,
     BatchSummaries,
-    PackageInfoSQL,
+    PackageRecords,
     ReleaseFile,
     Digests,
     Vulnerabilities,
@@ -91,7 +92,7 @@ class DatabaseExporter:
         return
 
     def add_pip_package(self, data: dict, batch_job_id: str):
-        package_info = PackageInfoSQL(
+        package_record = PackageRecords(
             name=data["info"]["name"],
             batch_job_id=batch_job_id,
             version=data["info"]["version"],
@@ -125,7 +126,7 @@ class DatabaseExporter:
                     yanked=release.get("yanked", False),
                     yanked_reason=release.get("yanked_reason", None),
                     version=version,
-                    package_info=package_info,  # Associate with the main PackageInfoSQL object
+                    package_record=package_record,  # Associate with the main PackageRecords object
                 )
 
                 digests = Digests(
@@ -134,17 +135,17 @@ class DatabaseExporter:
                     sha256=release["digests"].get("sha256"),
                 )
                 release_file.digests = digests
-                package_info.release_files.append(release_file)
+                package_record.release_files.append(release_file)
 
         for vulnerability in data.get("vulnerabilities", []):
             vulnerability_obj = Vulnerabilities(
                 id=vulnerability.get("id", ""),
                 description=vulnerability.get("description", ""),
-                package_info=package_info  # Associate with the main PackageInfoSQL object
+                package_record=package_record  # Associate with the main PackageRecords object
             )
-            package_info.vulnerabilities.append(vulnerability_obj)
+            package_record.vulnerabilities.append(vulnerability_obj)
 
-        self.session.add(package_info)
+        self.session.add(package_record)
         self.session.commit()
 
     def export_to_database(self, df: pd.DataFrame, table_name: str) -> None:

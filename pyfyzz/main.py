@@ -11,14 +11,14 @@ import datetime
 import pandas as pd
 import requests
 
-from .analyzer import PythonPackageAnalyzer
-from .exports import FileExporter
-from .databases import DatabaseExporter
 from .fuzzer import Fuzzer
 from .logger import PyFyzzLogger
 from .arguments import Arguments
+from .analyzer import PythonPackageAnalyzer
+from .exports import FileExporter
+from .databases import DatabaseExporter
 from .validators import PyFyzzInputValidator
-from .models import PackageInfo, DBOptions
+from .models.data_models import PackageInfo, DBOptions
 from .serializers import PackageInfoSerializer, FuzzResultSerializer
 
 

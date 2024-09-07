@@ -9,3 +9,6 @@ pytest==8.3.2
 PyYAML==6.0.2
 setuptools==72.2.0
 urllib3==2.2.2
+requests==2.32.3
+requests-toolbelt==1.0.0
+PyYAML==6.0.2
