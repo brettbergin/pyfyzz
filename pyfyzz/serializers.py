@@ -3,16 +3,21 @@
 import json
 import pandas as pd
 
-from .models import PackageInfo, FuzzResult
+from .models.data_models import PackageInfo, FuzzResult
 
 
 class PackageInfoSerializer:
     def __init__(self, package_info: PackageInfo) -> None:
         self.package_info = package_info
         self.package_name = self.package_info.name
+        self.package_filepath = self.package_info.package_filepath
 
     def as_dict(self) -> dict:
-        output_dict = {"package_name": self.package_name, "modules": {}}
+        output_dict = {
+            "package_name": self.package_name,
+            "package_filepath": self.package_filepath,
+            "modules": {},
+        }
 
         for module_name, module_info in self.package_info.modules.items():
             module_dict = {"name": module_name, "classes": {}}
@@ -21,7 +26,11 @@ class PackageInfoSerializer:
                 class_dict = {"name": class_name, "methods": []}
 
                 for method_name, method_info in class_info.items():
-                    method_dict = {"name": method_name, "params": []}
+                    method_dict = {
+                        "name": method_name,
+                        "method_filepath": method_info.method_filepath,
+                        "params": [],
+                    }
 
                     for param in method_info.parameters:
                         param_dict = {
@@ -51,9 +60,11 @@ class PackageInfoSerializer:
                             flattened_list.append(
                                 {
                                     "package_name": self.package_name,
+                                    "package_filepath": self.package_filepath,
                                     "module_name": module_name,
                                     "class_name": class_name,
                                     "method_name": method_name,
+                                    "method_filepath": method_info.method_filepath,
                                     "param_name": param.name,
                                     "param_kind": param.kind,
                                     "param_default": param.default,
@@ -66,9 +77,11 @@ class PackageInfoSerializer:
                         flattened_list.append(
                             {
                                 "package_name": self.package_name,
+                                "package_filepath": self.package_filepath,
                                 "module_name": module_name,
                                 "class_name": class_name,
                                 "method_name": method_name,
+                                "method_filepath": method_info.method_filepath,
                                 "param_name": None,
                                 "param_kind": None,
                                 "param_default": None,
@@ -79,9 +92,8 @@ class PackageInfoSerializer:
 
         return flattened_list
 
-    def as_dataframe(self):
-        df = pd.DataFrame(self.as_flattened_dict())
-        return df
+    def as_dataframe(self) -> pd.DataFrame:
+        return pd.DataFrame(self.as_flattened_dict())
 
 
 class FuzzResultSerializer:
@@ -121,7 +133,7 @@ class FuzzResultSerializer:
                         "package_name": self.fuzz_results.name,
                         "method_name": method_result.method_name,
                         "inputs": json.dumps(fuzz_case.inputs),
-                        # "return_value": fuzz_case.return_value,
+                        "return_value": fuzz_case.return_value,
                         "exception": (
                             str(fuzz_case.exception) if fuzz_case.exception else None
                         ),
@@ -131,7 +143,7 @@ class FuzzResultSerializer:
 
         return flattened_list
 
-    def as_dataframe(self):
+    def as_dataframe(self) -> pd.DataFrame:
         df = pd.DataFrame(self.as_flattened_dict())
 
         if "exception" in df.columns:

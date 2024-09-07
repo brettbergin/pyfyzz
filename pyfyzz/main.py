@@ -3,23 +3,28 @@
 import os
 import sys
 import uuid
+import json
+
 from typing import Tuple, Dict
+import datetime
 
 import pandas as pd
+import requests
 
-from .analyzer import PythonPackageAnalyzer
-from .exporter import FileExporter, DatabaseExporter
 from .fuzzer import Fuzzer
 from .logger import PyFyzzLogger
 from .arguments import Arguments
+from .analyzer import PythonPackageAnalyzer
+from .exports import FileExporter
+from .databases import DatabaseExporter
 from .validators import PyFyzzInputValidator
-from .models import PackageInfo, DBOptions
+from .models.data_models import PackageInfo, DBOptions
 from .serializers import PackageInfoSerializer, FuzzResultSerializer
 
 
 def fuzz_package(
     logger: PyFyzzLogger, package_info: PackageInfo
-) -> Tuple[Dict, pd.DataFrame]:
+) -> Tuple[Dict, pd.DataFrame, Dict]:
     """
     Attempts to invoke the package fuzzer against the package info
     data model object we enumerated.
@@ -27,7 +32,7 @@ def fuzz_package(
     returns: Fuzzer or sys.exit(-1)
     """
 
-    fuzzer = Fuzzer(package_under_test=package_info)
+    fuzzer = Fuzzer(logger=logger, package_under_test=package_info)
     ran = fuzzer.run()
     if not ran:
         logger.log(
@@ -41,7 +46,7 @@ def fuzz_package(
     results_as_df = FuzzResultSerializer(
         fuzz_results=fuzzer.fuzz_results
     ).as_dataframe()
-    return (results_as_dict, results_as_df)
+    return (results_as_dict, results_as_df, fuzzer.exception_count)
 
 
 def analyze_package(
@@ -118,7 +123,15 @@ def valid_user_input(logger: PyFyzzLogger) -> Tuple[str, bool, str]:
     return (package_name, ignore_private, output_format)
 
 
-def publish_to_database(logger, pkg_df: pd.DataFrame, fr_df: pd.DataFrame, batch_job_id: str) -> None:
+def publish_to_database(
+    logger: PyFyzzLogger,
+    pkg_name: str,
+    start_t: datetime.datetime,
+    pkg_df: pd.DataFrame,
+    fr_df: pd.DataFrame,
+    batch_job_id: str,
+    discovered_methods: int,
+) -> None:
     """ """
     db_user = os.environ.get("PYFYZZ_DB_USERNAME")
     if not db_user:
@@ -146,14 +159,36 @@ def publish_to_database(logger, pkg_df: pd.DataFrame, fr_df: pd.DataFrame, batch
         logger=logger,
     )
 
-    pkg_df['batch_job_id'] = batch_job_id  # Add batch_job_id column to pkg_df
-    fr_df['batch_job_id'] = batch_job_id  # Add batch_job_id column to fr_df
+    db_exporter.start_new_batch(
+        batch_job_id,
+        pkg_name,
+        start_time=start_t,
+        stop_time=None,
+        discovered_methods_count=discovered_methods,
+        batch_status="running",
+    )
+
+    url = f"https://pypi.org/pypi/{pkg_name}/json"
+    r = requests.get(url)
+
+    if r.status_code in (200, 201, 202):
+        logger.log(
+            "debug", f"[+] Successfully found pypi json data for package: {pkg_name}"
+        )
+        resp_json = json.loads(r.content)
+        db_exporter.add_pip_package(data=resp_json, batch_job_id=batch_job_id)
+    else:
+        logger.log("debug", "[!] Unable to find package information in pypi.")
+
+    pkg_df["batch_job_id"] = batch_job_id
+    fr_df["batch_job_id"] = batch_job_id
 
     logger.log("info", "[+] Preparing to add package info to database.")
-    db_exporter.export_to_database(pkg_df, "compositions")
+    db_exporter.export_to_database(pkg_df, "topologies")
 
     logger.log("info", "[+] Preparing to add fuzz results to database.")
-    db_exporter.export_to_database(fr_df, "results")
+    db_exporter.export_to_database(fr_df, "fuzz_results")
+    return db_exporter
 
 
 def main() -> None:
@@ -161,13 +196,14 @@ def main() -> None:
     Main entry point for the script. Parses arguments, verifies the package,
     and performs the analysis and export.
     """
+    start_time = datetime.datetime.now()
 
-    logger = PyFyzzLogger(name="pyfyzz", level="debug")
-    logger.log("info", "[+] Starting pyfyzz.")
-    
-    batch_job_id = str(uuid.uuid4()) 
+    logger = PyFyzzLogger(name="pyfyzz", level="info")
+    logger.log("info", f"[+] Starting pyfyzz @: {start_time}.")
 
     file_exporter = FileExporter(logger=logger)
+
+    batch_job_id = str(uuid.uuid4())
 
     package_name, ignore_private, output_format = valid_user_input(logger)
 
@@ -175,19 +211,41 @@ def main() -> None:
         logger, pkg_name=package_name, igr_priv=ignore_private
     )
 
-    fuzz_results_dict, fuzz_results_df = fuzz_package(logger, package_info=pkg_info)
+    fuzz_results_dict, fuzz_results_df, fuzz_counts = fuzz_package(
+        logger, package_info=pkg_info
+    )
+
+    fuzzed_method_count = len(
+        list(set([res["method_name"] for res in fuzz_results_dict["results"]]))
+    )
+
+    db_exporter = publish_to_database(
+        logger=logger,
+        batch_job_id=batch_job_id,
+        pkg_name=package_name,
+        start_t=start_time,
+        pkg_df=pkg_df,
+        fr_df=fuzz_results_df,
+        discovered_methods=fuzzed_method_count,
+    )
+
+    db_exporter.insert_batch_summary(
+        counts=fuzz_counts, batch_job_id=batch_job_id, pkg_name=package_name
+    )
 
     if output_format == "json":
-        file_exporter.export_to_json(pkg_dict, f"composition_{package_name}.json")
+        file_exporter.export_to_json(pkg_dict, f"topology_{package_name}.json")
         file_exporter.export_to_json(fuzz_results_dict, f"results_{package_name}.json")
 
     elif output_format == "yaml":
-        file_exporter.export_to_yaml(pkg_dict, f"composition_{package_name}.yaml")
+        file_exporter.export_to_yaml(pkg_dict, f"topology_{package_name}.yaml")
         file_exporter.export_to_yaml(fuzz_results_dict, f"results_{package_name}.yaml")
 
-    publish_to_database(logger, pkg_df, fuzz_results_df, batch_job_id)
+    stop_time = datetime.datetime.now()
+    db_exporter.update_job_complete(
+        batch_job_id=batch_job_id, stop_time=stop_time, batch_status="completed"
+    )
 
-    logger.log("info", "[+] Fuzzer results file exportation is complete.")
-    logger.log("info", "[+] Pyfyzz finished.")
+    logger.log("info", f"[+] Pyfyzz finished @: {stop_time}.")
 
     sys.exit(0)

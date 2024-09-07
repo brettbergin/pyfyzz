@@ -4,7 +4,8 @@ import pkgutil
 import inspect
 import importlib
 
-from .models import ModuleInfo, PackageInfo, ParameterInfo, MethodInfo
+from .models.data_models import ModuleInfo, PackageInfo, ParameterInfo, MethodInfo
+
 
 class PythonPackageAnalyzer:
     def __init__(self, logger) -> None:
@@ -38,6 +39,7 @@ class PythonPackageAnalyzer:
         returns: PackageInfo
         """
         package_info = PackageInfo(name=pkg_name)
+        package_info.package_filepath = inspect.getfile(package)
 
         if hasattr(package, "__path__"):
             for module_info in pkgutil.iter_modules(package.__path__):
@@ -115,7 +117,8 @@ class PythonPackageAnalyzer:
                     method_info = MethodInfo(
                         name=method_name,
                         parameters=parameters,
-                        return_type=return_type,  # Store return type
+                        return_type=return_type,
+                        method_filepath=inspect.getfile(method),
                     )
 
                     class_methods[method_name] = method_info

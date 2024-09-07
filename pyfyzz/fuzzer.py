@@ -1,28 +1,26 @@
 #!/usr/bin/env python3
 
 import sys
-import json
+
 import base64
 import importlib
 import inspect
-from dataclasses import asdict
 from collections import defaultdict
-import yaml
 from typing import Dict, List
 
 
-from .models import FuzzResult, MethodResult, FuzzCase
+from .models.data_models import FuzzResult, MethodResult, FuzzCase
 from .logger import PyFyzzLogger
 
 
 class Fuzzer:
-    def __init__(self, package_under_test):
+    def __init__(self, logger: PyFyzzLogger, package_under_test):
+        self.logger = logger
         self.package_under_test = package_under_test
         self.test_map = self._generate_test_map()
         self.has_specific_types = self._check_for_specific_types()
         self.exception_count = defaultdict(int)
         self.fuzz_results = FuzzResult(name=package_under_test.name)
-        self.logger = PyFyzzLogger()
 
     def _check_for_specific_types(self) -> bool:
         """
@@ -106,7 +104,7 @@ class Fuzzer:
             fuzzed_values = self.fuzz_parameter(param.param_type)
 
             self.logger.log(
-                "info",
+                "debug",
                 f"[+] Testing parameter: {param.name} with {len(fuzzed_values)} permutations.",
             )
             for fuzzed_value in fuzzed_values:
@@ -255,7 +253,9 @@ class Fuzzer:
         else:
             method = getattr(module, method_name)
 
-        self.logger.log("info", f"[+] Fuzzing: '{import_statement}.{method_name}'")
+        self.logger.log(
+            "info", f"[+] Fuzzing: '{import_statement} as x; x.{method_name}()'"
+        )
 
         method_result = MethodResult(method_name=method_name)
         parameters = self.test_map[method_path].parameters
