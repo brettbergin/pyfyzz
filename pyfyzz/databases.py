@@ -104,8 +104,8 @@ class DatabaseExporter:
             license=data["info"]["license"],
             summary=data["info"]["summary"],
             keywords=data["info"]["keywords"],
-            project_url=data['info']['project_url'],
-            project_urls=json.dumps(data['info']['project_urls']),
+            project_url=data["info"]["project_url"],
+            project_urls=json.dumps(data["info"]["project_urls"]),
             yanked=data["info"]["yanked"],
             yanked_reason=data["info"]["yanked_reason"],
         )
@@ -141,7 +141,7 @@ class DatabaseExporter:
             vulnerability_obj = Vulnerabilities(
                 id=vulnerability.get("id", ""),
                 description=vulnerability.get("description", ""),
-                package_record=package_record  # Associate with the main PackageRecords object
+                package_record=package_record,  # Associate with the main PackageRecords object
             )
             package_record.vulnerabilities.append(vulnerability_obj)
 

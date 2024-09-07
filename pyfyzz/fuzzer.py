@@ -253,7 +253,9 @@ class Fuzzer:
         else:
             method = getattr(module, method_name)
 
-        self.logger.log("info", f"[+] Fuzzing: '{import_statement} as x; x.{method_name}()'")   
+        self.logger.log(
+            "info", f"[+] Fuzzing: '{import_statement} as x; x.{method_name}()'"
+        )
 
         method_result = MethodResult(method_name=method_name)
         parameters = self.test_map[method_path].parameters

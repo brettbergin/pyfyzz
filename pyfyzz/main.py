@@ -172,7 +172,9 @@ def publish_to_database(
     r = requests.get(url)
 
     if r.status_code in (200, 201, 202):
-        logger.log("debug", f"[+] Successfully found pypi json data for package: {pkg_name}")
+        logger.log(
+            "debug", f"[+] Successfully found pypi json data for package: {pkg_name}"
+        )
         resp_json = json.loads(r.content)
         db_exporter.add_pip_package(data=resp_json, batch_job_id=batch_job_id)
     else:

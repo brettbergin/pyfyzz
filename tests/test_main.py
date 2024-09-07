@@ -20,6 +20,7 @@ class TestPyFyzz:
         analyzer = PythonPackageAnalyzer(logger=logger)
 
         import os
+
         package_info = analyzer.enumerate_package_contents("os", os)
 
         assert package_info.name == "os"

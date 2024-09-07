@@ -13,7 +13,11 @@ class PackageInfoSerializer:
         self.package_filepath = self.package_info.package_filepath
 
     def as_dict(self) -> dict:
-        output_dict = {"package_name": self.package_name, "package_filepath": self.package_filepath, "modules": {}}
+        output_dict = {
+            "package_name": self.package_name,
+            "package_filepath": self.package_filepath,
+            "modules": {},
+        }
 
         for module_name, module_info in self.package_info.modules.items():
             module_dict = {"name": module_name, "classes": {}}
@@ -22,7 +26,11 @@ class PackageInfoSerializer:
                 class_dict = {"name": class_name, "methods": []}
 
                 for method_name, method_info in class_info.items():
-                    method_dict = {"name": method_name, "method_filepath": method_info.method_filepath, "params": []}
+                    method_dict = {
+                        "name": method_name,
+                        "method_filepath": method_info.method_filepath,
+                        "params": [],
+                    }
 
                     for param in method_info.parameters:
                         param_dict = {

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from dataclasses import dataclass, field # , asdict
+from dataclasses import dataclass, field  # , asdict
 from typing import List, Dict, Optional, Any
 
 # import pandas as pd
@@ -141,5 +141,3 @@ class FuzzResult:
     #                 }
     #             )
     #     return pd.DataFrame(flattened_list)
-
-
