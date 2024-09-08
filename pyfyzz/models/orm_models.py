@@ -25,6 +25,7 @@ class BatchJob(Base):
     __tablename__ = "batches"
 
     batch_job_id = Column(CHAR(36), primary_key=True, unique=True)
+
     package_name = Column(String(255), nullable=False)
     start_time = Column(DateTime, nullable=False)
     stop_time = Column(DateTime, nullable=True)
@@ -44,6 +45,7 @@ class BatchSummaries(Base):
 
     batch_summary_id = Column(CHAR(36), primary_key=True, unique=True)
     batch_job_id = Column(CHAR(36), ForeignKey("batches.batch_job_id"))
+
     package_name = Column(String(255), nullable=False)
     exception_type = Column(String(255), nullable=False)
     exception_occurences = Column(Integer, nullable=True)
@@ -58,6 +60,7 @@ class FuzzResults(Base):
 
     record_id = Column(CHAR(36), primary_key=True, unique=True)
     batch_job_id = Column(CHAR(36), ForeignKey("batches.batch_job_id"))
+
     package_name = Column(String(255), nullable=False)
     method_name = Column(String(255), nullable=False)
     inputs = Column(Text, nullable=True)
@@ -74,6 +77,7 @@ class PackageTopology(Base):
 
     record_id = Column(CHAR(36), primary_key=True, unique=True)
     batch_job_id = Column(CHAR(36), ForeignKey("batches.batch_job_id"))
+
     package_name = Column(String(255), nullable=True)
     package_filepath = Column(Text, nullable=True)
     module_name = Column(String(255), nullable=True)
@@ -129,6 +133,7 @@ class ReleaseFile(Base):
     id = Column(
         CHAR(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True
     )
+
     comment_text = Column(Text, nullable=True)
     downloads = Column(Integer, nullable=True)
     filename = Column(String(255), nullable=False)
@@ -156,6 +161,7 @@ class Digests(Base):
     id = Column(
         CHAR(36), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True
     )
+
     blake2b_256 = Column(String(255), nullable=True)
     md5 = Column(String(255), nullable=True)
     sha256 = Column(String(255), nullable=True)
