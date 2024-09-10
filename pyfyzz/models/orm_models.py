@@ -13,8 +13,9 @@ from sqlalchemy import (
     Text,
     ForeignKey,
     CHAR,
-    Boolean,
+    Boolean
 )
+from sqlalchemy.dialects.mysql import LONGTEXT
 
 
 Base = declarative_base()
@@ -66,7 +67,7 @@ class FuzzResults(Base):
     inputs = Column(Text, nullable=True)
     exception = Column(String(255), nullable=True)
     encoded_source = Column(Text, nullable=True)
-    return_value = Column(Text, nullable=True)
+    return_value = Column(LONGTEXT, nullable=True)
 
     batch_job = relationship("BatchJob", back_populates="fuzz_results")
 

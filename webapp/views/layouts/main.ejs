@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/default.min.css" rel="stylesheet">
+  <style>
+    /* Reset margin and padding */
+    body, html {
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+  <style>
+    /* Custom tooltip width */
+    .tooltip-inner {
+      max-width: 500px;
+      white-space: pre-wrap;
+      text-align: left !important;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <a class="navbar-brand" href="/">PyFyzz</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/batches">Batches</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/batches/summaries">Batch Summaries</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/packages">Packages</a>
+        </li>
+      </ul>
+
+    </div>
+
+  </nav>
+
+  <!-- Modal structure for displaying source code -->
+  <div class="modal fade" id="sourceCodeModal" tabindex="-1" aria-labelledby="sourceCodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+       <div class="modal-content">
+          <div class="modal-header">
+             <h5 class="modal-title" id="sourceCodeModalLabel">Source Code</h5>
+             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+             <pre><code id="sourceCodeContent" class="hljs language-python"></code></pre> <!-- Area for code -->
+          </div>
+          <div class="modal-footer">
+             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+       </div>
+    </div>
+ </div>
+
+  <!-- Footer
+  <footer class="footer text-center mt-5">
+    <p>&copy; 2024 PyFyzz WebApp. All rights reserved.</p>
+  </footer> -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+      var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+      })
+    });
+  </script>
+  <script>
+    var sourceCodeModal = document.getElementById('sourceCodeModal');
+    sourceCodeModal.addEventListener('show.bs.modal', function (event) {
+      var button = event.relatedTarget; // Button that triggered the modal
+      var sourceCode = button.getAttribute('data-source'); // Extract info from data-* attributes
+      // Insert the source code into the modal body
+      var modalBody = document.getElementById('sourceCodeContent');
+      modalBody.textContent = sourceCode; // Set the source code as the modal content
+      if (typeof hljs !== 'undefined') {
+        hljs.highlightElement(modalBody);
+      }
+    });
+  </script>
+  <script src="/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+</body>
+</html>
