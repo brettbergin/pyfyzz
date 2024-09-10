@@ -326,7 +326,16 @@ app.get('/', async (req, res) => {
                 result.DecodedSource = 'No Source Available';
             }
         });
-       
+
+        if (results1.status === "rejected") {
+            throw new Error(`Error fetching batch and exception details: ${results1.reason}`);
+          }
+          if (results2.status === "rejected") {
+            throw new Error(`Error fetching module and topology info: ${results2.reason}`);
+          }
+          if (results3.status === "rejected") {
+            throw new Error(`Error fetching fuzz results: ${results3.reason}`);
+          }     
         // Pass all three results to the EJS template
         res.render('pages/home', {
             title: 'PyFyzz Home',

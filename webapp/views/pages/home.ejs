@@ -174,12 +174,12 @@
                                           <% if (result3.DecodedSource) { %>
                                             <!-- Method name becomes a link to open the modal -->
                                             <a href="#" 
-                                            class="btn btn-link text-decoration-none" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#sourceCodeModal" 
-                                            data-source="<%- result3.DecodedSource %>"> <!-- Remove leading whitespace -->
-                                            <%= fuzzedMethod %>
-                                         </a>
+                                               class="btn btn-link text-decoration-none" 
+                                               data-bs-toggle="modal" 
+                                               data-bs-target="#sourceCodeModal" 
+                                               data-source="<%- result3.DecodedSource %>">
+                                               <%= fuzzedMethod %>
+                                            </a>
                                           <% } else { %>
                                             <%= fuzzedMethod %> <!-- Just display method name if no source available -->
                                           <% } %>
