@@ -1,0 +1,269 @@
+<%- include('../layouts/main') %>
+
+<div class="container mt-5">
+  <div class="card">
+    <div class="card-header bg-primary text-white">
+      <h1 class="h3">Package Analysis</h1>
+    </div>
+    <div class="card-body">
+
+      <!-- Search form for package name -->
+      <form action="" method="GET" class="mb-4">
+        <div class="form-group">
+          <label for="package_name">Search by Package Name</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            id="package_name" 
+            name="package_name" 
+            value="<%= package_name || '' %>" 
+            placeholder="Enter a package name">
+        </div><br>
+        <button type="submit" class="btn btn-primary">Search</button>
+        <a href="/" class="btn btn-secondary">Clear</a>
+      </form>
+
+      <% if (results1.length > 0) { %>
+
+      <div class="accordion" id="packageAccordion"> <!-- Bootstrap accordion container -->
+
+        <% results1.forEach((result1, index) => { %>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="heading<%= index %>">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<%= index %>" aria-expanded="false" aria-controls="collapse<%= index %>">
+                <%= result1.package_name %>
+              </button>
+            </h2>
+            <div id="collapse<%= index %>" class="accordion-collapse collapse" aria-labelledby="heading<%= index %>" data-bs-parent="#packageAccordion">
+              <div class="accordion-body">
+                <h3><strong>Scan Information:</strong></h3>
+                <div class="row">
+                  <div class="col-md-4">
+                    <p><strong>Package Name:</strong> <%= result1.package_name || 'Unknown' %></p>
+                    <p><strong>Package Version:</strong> <%= result1.version %></p>
+                    <% if (result1.home_page) { %>
+                      <p><strong>Homepage: </strong> <a href="<%= result1.home_page %>"><%= result1.home_page %></a></p>
+                    <% } else { %>
+                      <p><strong>Homepage: </strong> <%= result1.home_page || 'Unknown' %></p>
+                    <% } %>
+
+                    <% if (result1.home_page) { %>
+                      <p><strong>Project URL: </strong> <a href="<%= result1.project_url %>"><%= result1.project_url %></a></p>
+                    <% } else { %>
+                      <p><strong>Project URL: </strong> <%= result1.project_url || 'Unknown' %></p>
+                    <% } %> 
+                  </div>
+                  <div class="col-md-4">
+                    <p><strong>Job ID: </strong><a href="/batches?batch_job_id=<%= result1.batch_job_id %>"><%= result1.batch_job_id.slice(-10) %></a></p>
+                    <p><strong>Start Time:</strong> <%= new Date(result1.start_time).toLocaleDateString() %> <%= new Date(result1.start_time).toLocaleTimeString() %></p>
+                    <p><strong>Stop Time:</strong> <%= new Date(result1.stop_time).toLocaleDateString() %> <%= new Date(result1.stop_time).toLocaleTimeString() %></p>
+                  </div>
+                  <div class="col-md-4">
+                    <p><strong>Exceptions:</strong></p>
+                    <ul> <!-- Bullet points for exceptions -->
+                      <% if (result1.Exceptions) { %>
+                        <% let exceptions = result1.Exceptions.split(','); %>
+                        <% let exceptionCount = result1.ExceptionCount.split(','); %>
+                        <% for (let i = 0; i < exceptions.length; i++) { %>
+                          <li><%= exceptionCount[i] %></li> <!-- Each exception as a list item -->
+                        <% } %>
+                      <% } else { %>
+                        <li>No exceptions recorded</li>
+                      <% } %>
+                    </ul>
+                  </div>
+                </div>
+
+                <!-- Nested Accordion for Package Composition -->
+                <div class="accordion mt-3" id="nestedAccordion<%= index %>">
+                  <% const correspondingResult2 = results2.find(r => r.batch_job_id === result1.batch_job_id); %>
+                  <% if (correspondingResult2) { %>
+                    <div class="accordion-item">
+                      <h2 class="accordion-header" id="headingComposition<%= index %>">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseComposition<%= index %>" aria-expanded="false" aria-controls="collapseComposition<%= index %>">
+                          Package Composition
+                        </button>
+                      </h2>
+                      <div id="collapseComposition<%= index %>" class="accordion-collapse collapse" aria-labelledby="headingComposition<%= index %>" data-bs-parent="#nestedAccordion<%= index %>">
+                        <div class="accordion-body">
+                          <div class="row">
+                            <div class="col-md-6">
+                              <!-- Modules Section -->
+                              <p><strong>Modules (<%= correspondingResult2.ModulesCount %>):</strong></p> <!-- Display the module count -->
+                              <% if (correspondingResult2.Modules) { %>
+                                <ul>
+                                  <% let modules = correspondingResult2.Modules.split(', '); %>
+                                  <% modules.forEach(module => { %>
+                                    <li><%= module %></li> <!-- Each module as a list item -->
+                                  <% }) %>
+                                </ul>
+                              <% } else { %>
+                                <p>No modules available</p>
+                              <% } %>
+
+                              <!-- Classes Section -->
+                              <p><strong>Classes (<%= correspondingResult2.ClassesCount %>):</strong></p> <!-- Display the class count -->
+                              <% if (correspondingResult2.Classes) { %>
+                                <ul>
+                                  <% let classes = correspondingResult2.Classes.split(', '); %>
+                                  <% classes.forEach(className => { %>
+                                    <li><%= className %></li> <!-- Each class as a list item -->
+                                  <% }) %>
+                                </ul>
+                              <% } else { %>
+                                <p>No classes available</p>
+                              <% } %>
+                            </div>
+
+                            <div class="col-md-6">
+                              <!-- Methods Section -->
+                              <p><strong>Methods (<%= correspondingResult2.MethodsCount %>):</strong></p> <!-- Display the method count -->
+                              <% if (correspondingResult2.Methods) { %>
+                                <ul>
+                                  <% let methods = correspondingResult2.Methods.split(', '); %>
+                                  <% methods.forEach(method => { %>
+                                    <li><%= method %></li> <!-- Each method as a list item -->
+                                  <% }) %>
+                                </ul>
+                              <% } else { %>
+                                <p>No methods available</p>
+                              <% } %>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  <% } else { %>
+                    <p>No module, class, or method information available for this batch.</p>
+                  <% } %>
+                </div>
+
+                <!-- Nested Accordion for Fuzz Results -->
+                <% const correspondingResult3 = results3.filter(r => r.batch_job_id === result1.batch_job_id); %>
+                <% if (correspondingResult3.length > 0) { %>
+                  <div class="accordion-item mt-3">
+                    <h2 class="accordion-header" id="headingFuzz<%= index %>">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFuzz<%= index %>" aria-expanded="false" aria-controls="collapseFuzz<%= index %>">
+                        Fuzz Results
+                      </button>
+                    </h2>
+                    <div id="collapseFuzz<%= index %>" class="accordion-collapse collapse" aria-labelledby="headingFuzz<%= index %>" data-bs-parent="#nestedAccordion<%= index %>">
+                      <div class="accordion-body">
+                        <h>Python Exceptions</h4>
+                        <div class="row">
+                          <div class="col-md-12">
+                            <table class="table table-bordered table-striped table-responsive">
+                              <thead>
+                                <tr>
+                                  <th style="word-wrap: break-word; word-break: break-all;">Method</th>
+                                  <th style="word-wrap: break-word; word-break: break-all;">Exception Type</th>
+                                  <th style="word-wrap: break-word; word-break: break-all;">Exception Message</th>
+                                  <th style="word-wrap: break-word; word-break: break-all;">Inputs</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <% correspondingResult3.forEach(result3 => { %>
+                                  <% if (result3.FuzzedMethods) { %>
+                                    <% let fuzzedMethods = result3.FuzzedMethods.split(', '); %>
+                                    <% fuzzedMethods.forEach(fuzzedMethod => { %>
+                                      <tr>
+                                        <td style="word-wrap: break-word; word-break: break-all;">
+                                          <% if (result3.DecodedSource) { %>
+                                            <!-- Method name becomes a link to open the modal -->
+                                            <a href="#" 
+                                              class="btn btn-link text-decoration-none" 
+                                              data-bs-toggle="modal" 
+                                              data-bs-target="#sourceCodeModal" 
+                                              data-source="<%- result3.DecodedSource %>">
+                                              <%= fuzzedMethod %>
+                                            </a>
+                                          <% } else { %>
+                                            <%= fuzzedMethod %> <!-- Just display method name if no source available -->
+                                          <% } %>
+                                        </td>
+                                        <td style="word-wrap: break-word; word-break: break-all;">
+                                          <%= result3.ExceptionType || 'No Exception Type' %>
+                                        </td>
+                                        <td style="word-wrap: break-word; word-break: break-all;">
+                                          <%= result3.ExceptionMessage || 'No Exception' %>
+                                        </td>
+                                        <td style="word-wrap: break-word; word-break: break-all;" data-bs-toggle="tooltip" data-bs-placement="top" title="<%= result3.ExceptionInputs %>">
+                                          <% 
+                                            try { 
+                                              let inputs = JSON.parse(result3.ExceptionInputs); // Parse the ExceptionInputs JSON
+                                          %>
+                                              <ul>
+                                                <% for (const [key, value] of Object.entries(inputs)) { %>
+                                                  <li><strong><%= key %>:</strong> 
+                                                    <% if (value === "") { %> 
+                                                      "" <!-- Display empty quotes for empty strings -->
+                                                    <% } else { %> 
+                                                      <code>
+                                                        <%= (value || 'None')
+                                                            .toString()
+                                                            .replace(/\n/g, '\\n')   // Replace newline with literal \n
+                                                            .replace(/\t/g, '\\t')   // Replace tab with literal \t
+                                                            .replace(/\r/g, '\\r')   // Replace carriage return with literal \r
+                                                            .replace(/\u0000/g, '\\u0000') // Handle null character
+                                                            .replace(/[\x00-\x1F]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')) // Replace other control chars
+                                                            .substring(0, 20) %> <!-- Truncate to 20 characters -->
+                                                      </code>
+                                                      <% if (value && value.length > 100) { %>...<% } %> <!-- Add ellipsis if truncated -->
+                                                    <% } %>
+                                                  </li>
+                                                <% } %>
+                                              </ul>
+                                          <% 
+                                            } catch (e) { %>
+                                              <%= result3.ExceptionInputs.substring(0, 100) || 'No Inputs' %>... <!-- Fallback if parsing fails -->
+                                          <% } %>
+                                        </td>
+                                      </tr>
+                                    <% }) %>
+                                  <% } else { %>
+                                    <tr>
+                                      <td colspan="4" class="text-center">No fuzzed methods available</td>
+                                    </tr>
+                                  <% } %>
+                                <% }) %>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% } else { %>
+                  <div class="accordion-item mt-3">
+                    <h2 class="accordion-header" id="headingFuzz<%= index %>">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNoFuzz<%= index %>" aria-expanded="false" aria-controls="collapseNoFuzz<%= index %>">
+                        Fuzz Results
+                      </button>
+                    </h2>
+                    <div id="collapseNoFuzz<%= index %>" class="accordion-collapse collapse" aria-labelledby="headingFuzz<%= index %>" data-bs-parent="#nestedAccordion<%= index %>">
+                      <div class="accordion-body">
+                        <p>No fuzzed method information available for this batch.</p>
+                      </div>
+                    </div>
+                  </div>
+                <% } %>
+
+
+              </div>
+            </div>
+          </div>
+        <% }) %>
+
+      </div> <!-- End accordion -->
+      <% } else { %>
+        <div class="alert alert-warning">
+          <p>No exceptions found.</p>
+        </div>
+      <% } %>
+    </div>
+    <div class="card-footer text-muted">
+      <p>Displaying <%= results1.length %> packages with exceptions</p>
+    </div>
+  </div>
+</div>

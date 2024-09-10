@@ -1,0 +1,102 @@
+<%- include('../layouts/main') %>
+
+<div class="container mt-5">
+  <div class="card">
+    <div class="card-header bg-primary text-white">
+      <h1 class="h3">Batches</h1>
+    </div>
+    <div class="card-body">
+      <form action="/batches" method="POST">
+        <div class="form-group">
+          <label for="package_to_scan">Create a new batch:</label>
+          <input type="text" class="form-control" id="package_to_scan" name="package_to_scan" placeholder="Enter a PyPI Package Name">
+        </div><br>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+
+      <div class="table-responsive mt-5">
+        <table class="table table-striped table-bordered table-hover">
+          <thead class="thead-dark">
+            <tr>
+              <th>
+                <a href="?sort=batch_job_id&order=<%= sort === 'batch_job_id' && order === 'ASC' ? 'DESC' : 'ASC' %>">
+                  Batch Job ID
+                  <%= sort === 'batch_job_id' ? (order === 'ASC' ? '▲' : '▼') : '' %>
+                </a>
+              </th>
+              <th>
+                <a href="?sort=package_name&order=<%= sort === 'package_name' && order === 'ASC' ? 'DESC' : 'ASC' %>">
+                  Package Name
+                  <%= sort === 'package_name' ? (order === 'ASC' ? '▲' : '▼') : '' %>
+                </a>
+              </th>
+              <th>
+                <a href="?sort=batch_status&order=<%= sort === 'batch_status' && order === 'ASC' ? 'DESC' : 'ASC' %>">
+                  Batch Status
+                  <%= sort === 'batch_status' ? (order === 'ASC' ? '▲' : '▼') : '' %>
+                </a>
+              </th>
+              <th>
+                <a href="?sort=start_time&order=<%= sort === 'start_time' && order === 'ASC' ? 'DESC' : 'ASC' %>">
+                  Start Time
+                  <%= sort === 'start_time' ? (order === 'ASC' ? '▲' : '▼') : '' %>
+                </a>
+              </th>
+              <th>
+                <a href="?sort=stop_time&order=<%= sort === 'stop_time' && order === 'ASC' ? 'DESC' : 'ASC' %>">
+                  Stop Time
+                  <%= sort === 'stop_time' ? (order === 'ASC' ? '▲' : '▼') : '' %>
+                </a>
+              </th>
+              <th>
+                <a href="?sort=discovered_methods&order=<%= sort === 'discovered_methods' && order === 'ASC' ? 'DESC' : 'ASC' %>">
+                  Discovered Methods
+                  <%= sort === 'discovered_methods' ? (order === 'ASC' ? '▲' : '▼') : '' %>
+                </a>
+              </th>
+              <th>
+                <a href="?sort=discovered_methods_date&order=<%= sort === 'discovered_methods_date' && order === 'ASC' ? 'DESC' : 'ASC' %>">
+                  Discovery Date
+                  <%= sort === 'discovered_methods_date' ? (order === 'ASC' ? '▲' : '▼') : '' %>
+                </a>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <% batches.forEach(batch => { %>
+              <tr>
+                <td>
+                  <a href="/batches?batch_job_id=<%= batch.batch_job_id %>"><%= batch.batch_job_id.slice(-10) %></a>
+                </td>
+                <td>
+                  <a href="/packages?batch_job_id=<%= batch.batch_job_id %>"><%= batch.package_name || 'Unknown' %></a>
+                </td>
+                <td>
+                  <span class="badge <%= batch.batch_status === 'completed' ? 'badge-success' : 'badge-warning' %>">
+                    <%= batch.batch_status.charAt(0).toUpperCase() + batch.batch_status.slice(1) %>
+                  </span>
+                </td>
+                <td>
+                    <%= new Date(batch.start_time).toLocaleDateString() || 'date unknown' %>
+                    <%= new Date(batch.start_time).toLocaleTimeString() || 'time unknown' %>
+                </td>
+                <td>
+                    <%= new Date(batch.stop_time).toLocaleDateString() || 'date unknown' %>
+                    <%= new Date(batch.stop_time).toLocaleTimeString() || 'time unknown' %>
+                </td>
+                <td><%= batch.discovered_methods || 0 %></td>
+                <td>
+                    <%= new Date(batch.discovered_methods_date).toLocaleDateString() || 'date unknown' %>
+                    <%= new Date(batch.discovered_methods_date).toLocaleTimeString() || 'time unknown' %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer text-muted">
+      <p>Displaying <%= batches.length %> batch jobs</p>
+    </div>
+  </div>
+</div>

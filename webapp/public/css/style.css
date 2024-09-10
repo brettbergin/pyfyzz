@@ -1,0 +1,15 @@
+body {
+    font-family: 'Arial', sans-serif;
+    padding-top: 50px;
+  }
+  .navbar {
+    margin-bottom: 20px;
+  }
+  .footer {
+    text-align: center;
+    padding: 20px;
+    background: #f1f1f1;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+  }

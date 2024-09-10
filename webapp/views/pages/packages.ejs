@@ -1,0 +1,97 @@
+<%- include('../layouts/main') %>
+
+<div class="container mt-5">
+  <div class="card">
+    <div class="card-header bg-primary text-white">
+      <h1 class="h3">Python Packages</h1>
+    </div>
+    <div class="card-body">
+      <% if (packages.length > 0) { %>
+      <div class="table-responsive">
+        <table class="table table-striped table-bordered table-hover">
+          <thead class="thead-dark">
+            <tr>
+              <th>
+                <a href="?sort=batch_job_id&order=<%= sort === 'batch_job_id' && order === 'ASC' ? 'DESC' : 'ASC' %>">
+                  Batch Job ID
+                  <%= sort === 'batch_job_id' ? (order === 'ASC' ? '▲' : '▼') : '' %>
+                </a>
+              </th>
+              <th>
+                <a href="?sort=name&order=<%= sort === 'name' && order === 'ASC' ? 'DESC' : 'ASC' %>">
+                  Package Name
+                  <%= sort === 'name' ? (order === 'ASC' ? '▲' : '▼') : '' %>
+                </a>
+              </th>
+              <th>
+                <a href="?sort=author&order=<%= sort === 'author' && order === 'ASC' ? 'DESC' : 'ASC' %>">
+                  Author
+                  <%= sort === 'author' ? (order === 'ASC' ? '▲' : '▼') : '' %>
+                </a>
+              </th>
+              <th>
+                <a href="?sort=version&order=<%= sort === 'version' && order === 'ASC' ? 'DESC' : 'ASC' %>">
+                  Version
+                  <%= sort === 'version' ? (order === 'ASC' ? '▲' : '▼') : '' %>
+                </a>
+              </th>
+              <th>
+                <a href="?sort=home_page&order=<%= sort === 'home_page' && order === 'ASC' ? 'DESC' : 'ASC' %>">
+                  Home Page
+                  <%= sort === 'home_page' ? (order === 'ASC' ? '▲' : '▼') : '' %>
+                </a>
+              </th>
+              <th>
+                <a href="?sort=project_url&order=<%= sort === 'project_url' && order === 'ASC' ? 'DESC' : 'ASC' %>">
+                  Project Page
+                  <%= sort === 'project_url' ? (order === 'ASC' ? '▲' : '▼') : '' %>
+                </a>
+              </th>
+              <th>
+                <a href="?sort=summary&order=<%= sort === 'summary' && order === 'ASC' ? 'DESC' : 'ASC' %>">
+                  Summary
+                  <%= sort === 'summary' ? (order === 'ASC' ? '▲' : '▼') : '' %>
+                </a>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <% packages.forEach(package => { %>
+              <tr>
+                <td>
+                  <a href="/batches?batch_job_id=<%= package.batch_job_id %>"><%= package.batch_job_id.slice(-10) %></a>
+                </td>
+                <td><%= package.name || 'Unknown' %></td>
+                <td><%= package.author || 'Unknown' %></td>
+                <td><%= package.version || 'Unknown' %></td>
+                <td>
+                    <% if (package.home_page) { %>
+                      <a href="<%= package.home_page %>" target="_blank"><%= package.home_page %></a>
+                    <% } else { %>
+                      Unknown
+                    <% } %>
+                </td>
+                <td>
+                    <% if (package.project_url) { %>
+                      <a href="<%= package.project_url %>" target="_blank"><%= package.project_url %></a>
+                    <% } else { %>
+                      Unknown
+                    <% } %>
+                </td>
+                <td><%= package.summary ? package.summary.slice(0, 250) : 'No summary available' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% } else { %>
+      <div class="alert alert-warning">
+        <p>No packages found.</p>
+      </div>
+      <% } %>
+    </div>
+    <div class="card-footer text-muted">
+        <p>Displaying <%= packages.length %> packages</p>
+    </div>
+  </div>
+</div>
