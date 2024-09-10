@@ -83,6 +83,8 @@ class FuzzCase:
     inputs: Dict[str, Any]
     return_value: Optional[Any] = None
     exception: Optional[str] = None
+    exception_type: Optional[str] = None
+    is_python_exception: Optional[bool] = None
     encoded_source: Optional[str] = None
 
     def as_dict(self):

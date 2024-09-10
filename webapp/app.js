@@ -279,30 +279,35 @@ app.get('/', async (req, res) => {
 
         // Third query to fetch fuzz results information
         let query3 = `
-            SELECT 
-              b.batch_job_id, 
-              b.package_name,
-              pr.name,
-              COUNT(DISTINCT fr.method_name) AS FuzzedMethodsCount,
-              GROUP_CONCAT(DISTINCT fr.method_name ORDER BY fr.method_name DESC SEPARATOR ', ') AS FuzzedMethods,
-              fr.encoded_source as EncodedSource,
-              fr.exception as ExceptionMessage,
-              fr.inputs as ExceptionInputs
-            FROM pyfyzz.batches b
-            LEFT JOIN pyfyzz.package_records pr
-              ON b.batch_job_id = pr.batch_job_id 
-              AND b.package_name = pr.name
-            LEFT JOIN pyfyzz.fuzz_results fr
-              ON b.batch_job_id = fr.batch_job_id
-              AND b.package_name = fr.package_name
-            WHERE fr.exception != "None"
-            GROUP BY 
-              b.batch_job_id, 
-              b.package_name,pr.name, 
-              fr.exception, 
-              fr.inputs,
-              fr.encoded_source
-            ORDER BY b.start_time DESC;
+          SELECT 
+            b.batch_job_id, 
+            b.package_name,
+            pr.name,
+            COUNT(DISTINCT fr.method_name) AS FuzzedMethodsCount,
+            GROUP_CONCAT(DISTINCT fr.method_name ORDER BY fr.method_name DESC SEPARATOR ', ') AS FuzzedMethods,
+            fr.encoded_source as EncodedSource,
+            fr.exception as ExceptionMessage,
+            fr.inputs as ExceptionInputs,
+            fr.exception_type as ExceptionType,
+            fr.is_python_exception as IsPythonException
+          FROM pyfyzz.batches b
+          LEFT JOIN pyfyzz.package_records pr
+            ON b.batch_job_id = pr.batch_job_id 
+            AND b.package_name = pr.name
+          LEFT JOIN pyfyzz.fuzz_results fr
+            ON b.batch_job_id = fr.batch_job_id
+            AND b.package_name = fr.package_name
+          WHERE fr.is_python_exception = 1
+          GROUP BY 
+            b.batch_job_id, 
+            b.package_name,
+            pr.name, 
+            fr.exception, 
+            fr.inputs,
+            fr.encoded_source,
+            fr.exception_type,
+            fr.is_python_exception
+          ORDER BY b.start_time DESC;
         `;
 
         const queryParams3 = [];

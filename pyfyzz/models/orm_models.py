@@ -66,6 +66,8 @@ class FuzzResults(Base):
     method_name = Column(String(255), nullable=False)
     inputs = Column(Text, nullable=True)
     exception = Column(String(255), nullable=True)
+    exception_type = Column(String(255), nullable=True)
+    is_python_exception = Column(Boolean, nullable=True)
     encoded_source = Column(Text, nullable=True)
     return_value = Column(LONGTEXT, nullable=True)
 

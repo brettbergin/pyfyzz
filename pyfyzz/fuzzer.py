@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import builtins
 
 import base64
 import importlib
@@ -92,6 +93,23 @@ class Fuzzer:
             import_statement = f"import {import_path}"
 
         return import_statement
+
+
+    def _is_py_standard_exception(self, exception_type: str) -> bool:
+        """
+        Determine if the provided exception type is a standard Python exception.
+        
+        Args:
+        exception_type (type): The exception class to check.
+
+        Returns:
+        bool: True if it's a standard Python exception, False if it's likely a custom exception.
+        """
+        return exception_type in [
+            exc.__name__ for exc 
+            in builtins.__dict__.values() 
+            if isinstance(exc, type) and issubclass(exc, BaseException)
+        ]
 
     def _generate_fuzzed_inputs(self, parameters: list) -> List:
         """
@@ -271,6 +289,9 @@ class Fuzzer:
 
             except Exception as e:
                 test_case.exception = str(e)
+                test_case.exception_type = type(e).__name__
+                test_case.is_python_exception = self._is_py_standard_exception(exception_type=type(e).__name__)
+
                 self.exception_count[type(e).__name__] += 1
             method_result.test_cases.append(test_case)
 

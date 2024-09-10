@@ -116,10 +116,13 @@ class FuzzResultSerializer:
                         "exception": (
                             str(fuzz_case.exception) if fuzz_case.exception else None
                         ),
+                        "exception_type": str(fuzz_case.exception_type),
+                        "is_python_exception": bool(fuzz_case.is_python_exception),
                         "encoded_source": fuzz_case.encoded_source,
                     }
                 )
             output_dict["results"].append(method_result_dict)
+
         return output_dict
 
     def as_flattened_dict(self) -> list:
@@ -137,10 +140,11 @@ class FuzzResultSerializer:
                         "exception": (
                             str(fuzz_case.exception) if fuzz_case.exception else None
                         ),
+                        "exception_type": str(fuzz_case.exception_type),
+                        "is_python_exception": bool(fuzz_case.is_python_exception),
                         "encoded_source": fuzz_case.encoded_source,
                     }
                 )
-
         return flattened_list
 
     def as_dataframe(self) -> pd.DataFrame:
