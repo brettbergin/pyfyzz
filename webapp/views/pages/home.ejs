@@ -56,6 +56,8 @@
                   </div>
                   <div class="col-md-4">
                     <p><strong>Job ID: </strong><a href="/batches?batch_job_id=<%= result1.batch_job_id %>"><%= result1.batch_job_id.slice(-10) %></a></p>
+                    <p><strong>Job Status: </strong><%= result1.batch_status %></p>
+                    <p><strong>Testable Methods: </strong><%= result1.discovered_methods %></p>
                     <p><strong>Start Time:</strong> <%= new Date(result1.start_time).toLocaleDateString() %> <%= new Date(result1.start_time).toLocaleTimeString() %></p>
                     <p><strong>Stop Time:</strong> <%= new Date(result1.stop_time).toLocaleDateString() %> <%= new Date(result1.stop_time).toLocaleTimeString() %></p>
                   </div>
@@ -263,7 +265,7 @@
       <% } %>
     </div>
     <div class="card-footer text-muted">
-      <p>Displaying <%= results1.length %> packages with exceptions</p>
+      <p>Displaying <strong><%= results1.length %></strong> packages</p>
     </div>
   </div>
 </div>

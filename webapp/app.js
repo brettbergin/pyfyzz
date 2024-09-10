@@ -223,23 +223,26 @@ app.get('/', async (req, res) => {
     try {
         // First query to fetch batch and exception details
         let query1 = `
-            SELECT 
-              b.batch_job_id, 
-              b.package_name,
-              COALESCE(pr.version, 'Unknown') AS version,
-              b.start_time,
-              b.stop_time,
-              pr.home_page,
-              pr.project_url,
-              pr.project_urls,
-              GROUP_CONCAT(bs.exception_type ORDER BY bs.exception_occurences DESC SEPARATOR ', ') AS Exceptions,
-              GROUP_CONCAT(CONCAT(bs.exception_type, '(', bs.exception_occurences, ') ') ORDER BY bs.exception_occurences DESC SEPARATOR ', ') AS ExceptionCount
-            FROM pyfyzz.batches b
-            JOIN pyfyzz.batch_summaries bs
-              ON b.batch_job_id = bs.batch_job_id
-            LEFT JOIN pyfyzz.package_records pr
-              ON b.batch_job_id = pr.batch_job_id 
-              AND b.package_name = pr.name
+          SELECT 
+            b.batch_job_id, 
+            b.package_name,
+            COALESCE(pr.version, 'Unknown') AS version,
+            b.start_time,
+            b.stop_time,
+            b.batch_status,
+            b.discovered_methods,
+            b.discovered_methods_date,
+            pr.home_page,
+            pr.project_url,
+            pr.project_urls,
+            GROUP_CONCAT(bs.exception_type ORDER BY bs.exception_occurences DESC SEPARATOR ', ') AS Exceptions,
+            GROUP_CONCAT(CONCAT(bs.exception_type, '(', bs.exception_occurences, ') ') ORDER BY bs.exception_occurences DESC SEPARATOR ', ') AS ExceptionCount
+          FROM pyfyzz.batches b
+          JOIN pyfyzz.batch_summaries bs
+            ON b.batch_job_id = bs.batch_job_id
+          LEFT JOIN pyfyzz.package_records pr
+            ON b.batch_job_id = pr.batch_job_id 
+            AND b.package_name = pr.name
         `;
 
         const queryParams1 = [];
@@ -250,7 +253,7 @@ app.get('/', async (req, res) => {
             queryParams1.push(`%${package_name}%`);
         }
 
-        query1 += ` GROUP BY b.batch_job_id, b.package_name, pr.version, pr.home_page, pr.project_url, pr.project_urls ORDER BY ${sort} ${order};`;
+        query1 += ` GROUP BY b.batch_job_id, pr.version, pr.home_page, pr.project_url, pr.project_urls ORDER BY ${sort} ${order};`;
 
         // Second query to fetch topologies and module information
         let query2 = `
