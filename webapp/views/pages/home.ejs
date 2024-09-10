@@ -37,30 +37,96 @@
             </h2>
             <div id="collapse<%= index %>" class="accordion-collapse collapse" aria-labelledby="heading<%= index %>" data-bs-parent="#packageAccordion">
               <div class="accordion-body">
-                <h3><strong>Scan Information:</strong></h3>
+                <h4>Scan Information</h4>
                 <div class="row">
-                  <div class="col-md-4">
-                    <p><strong>Package Name:</strong> <%= result1.package_name || 'Unknown' %></p>
-                    <p><strong>Package Version:</strong> <%= result1.version %></p>
-                    <% if (result1.home_page) { %>
-                      <p><strong>Homepage: </strong> <a href="<%= result1.home_page %>"><%= result1.home_page %></a></p>
-                    <% } else { %>
-                      <p><strong>Homepage: </strong> <%= result1.home_page || 'Unknown' %></p>
-                    <% } %>
 
-                    <% if (result1.home_page) { %>
-                      <p><strong>Project URL: </strong> <a href="<%= result1.project_url %>"><%= result1.project_url %></a></p>
-                    <% } else { %>
-                      <p><strong>Project URL: </strong> <%= result1.project_url || 'Unknown' %></p>
-                    <% } %> 
-                  </div>
                   <div class="col-md-4">
-                    <p><strong>Job ID: </strong><a href="/batches?batch_job_id=<%= result1.batch_job_id %>"><%= result1.batch_job_id.slice(-10) %></a></p>
-                    <p><strong>Job Status: </strong><%= result1.batch_status %></p>
-                    <p><strong>Testable Methods: </strong><%= result1.discovered_methods %></p>
-                    <p><strong>Start Time:</strong> <%= new Date(result1.start_time).toLocaleDateString() %> <%= new Date(result1.start_time).toLocaleTimeString() %></p>
-                    <p><strong>Stop Time:</strong> <%= new Date(result1.stop_time).toLocaleDateString() %> <%= new Date(result1.stop_time).toLocaleTimeString() %></p>
+                    <table class="table table-striped">
+                      <tbody>
+                        <tr>
+                          <th>Package Name</th>
+                          <td><code><%= result1.package_name || 'Unknown' %></code></td>
+                        </tr>
+                        <tr>
+                          <th>Package Version</th>
+                          <td><%= result1.version %></td>
+                        </tr>
+                        <tr>
+                          <th>Homepage</th>
+                          <td>
+                            <% if (result1.home_page) { %>
+                              <a 
+                                href="<%= result1.home_page %>" 
+                                title="<%= result1.home_page %>" 
+                                data-bs-toggle="tooltip" 
+                                data-bs-placement="top" 
+                                target="_blank" 
+                                rel="noopener noreferrer">
+                                link
+                              </a>
+                            <% } else { %>
+                              <%= result1.home_page || 'Unknown' %>
+                            <% } %>
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>Project URL</th>
+                          <td>
+                            <% if (result1.project_url) { %>
+                              <a 
+                                href="<%= result1.project_url %>" 
+                                title="<%= result1.project_url %>" 
+                                data-bs-toggle="tooltip" 
+                                data-bs-placement="top" 
+                                target="_blank" 
+                                rel="noopener noreferrer">
+                                link
+                              </a>
+                            <% } else { %>
+                              <%= result1.project_url || 'Unknown' %>
+                            <% } %>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
+                  
+                  <div class="col-md-4">
+                    <table class="table table-striped">
+                      <tbody>
+
+                        <tr>
+                          <th>Job Status</th>
+                          <td>
+                            <span style="color: <%= result1.batch_status === 'completed' ? 'green' : 'red' %>;">
+                              <strong><%= result1.batch_status.charAt(0).toUpperCase() + result1.batch_status.slice(1) %></strong>
+                            </span>
+                          </td>
+                        </tr>
+                        <tr></tr>
+                          <th>Job ID</th>
+                          <td>
+                            <a href="/batches?batch_job_id=<%= result1.batch_job_id %>">
+                              <%= result1.batch_job_id.slice(-10) %>
+                            </a>
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>Testable Methods</th>
+                          <td><%= result1.discovered_methods %></td>
+                        </tr>
+                        <tr>
+                          <th>Start Time</th>
+                          <td><%= new Date(result1.start_time).toLocaleDateString() %> <%= new Date(result1.start_time).toLocaleTimeString() %></td>
+                        </tr>
+                        <tr>
+                          <th>Stop Time</th>
+                          <td><%= new Date(result1.stop_time).toLocaleDateString() %> <%= new Date(result1.stop_time).toLocaleTimeString() %></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  
                   <div class="col-md-4">
                     <p><strong>Exceptions:</strong></p>
                     <ul> <!-- Bullet points for exceptions -->
@@ -75,6 +141,7 @@
                       <% } %>
                     </ul>
                   </div>
+
                 </div>
 
                 <!-- Nested Accordion for Package Composition -->
@@ -152,7 +219,7 @@
                     </h2>
                     <div id="collapseFuzz<%= index %>" class="accordion-collapse collapse" aria-labelledby="headingFuzz<%= index %>" data-bs-parent="#nestedAccordion<%= index %>">
                       <div class="accordion-body">
-                        <h>Python Exceptions</h4>
+                        <h4>Python Exceptions</h4>
                         <div class="row">
                           <div class="col-md-12">
                             <table class="table table-bordered table-striped table-responsive">
@@ -161,7 +228,7 @@
                                   <th style="word-wrap: break-word; word-break: break-all;">Method</th>
                                   <th style="word-wrap: break-word; word-break: break-all;">Exception Type</th>
                                   <th style="word-wrap: break-word; word-break: break-all;">Exception Message</th>
-                                  <th style="word-wrap: break-word; word-break: break-all;">Inputs</th>
+                                  <th style="word-wrap: break-word; word-break: break-all;">Fuzzing Arguments</th>
                                 </tr>
                               </thead>
                               <tbody>
