@@ -3,6 +3,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 const escapeHtml = require('escape-html');
 require('dotenv').config();
+const marked = require('marked');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -36,9 +37,7 @@ app.get('/batches', async (req, res) => {
       const [batches] = await db.query(query, queryParams);
 
       // Scan the package if provided
-      if (package_to_scan) {
-        console.log(`Scanning package: ${package_to_scan}`);
-        
+      if (package_to_scan) {        
         const pyfyzz = spawn('pyfyzz', ['-p', package_to_scan, '-o', 'json', '-i']);
 
         pyfyzz.stdout.on('data', (data) => {
@@ -204,7 +203,20 @@ app.get('/packages', async (req, res) => {
   
       // Execute query and render the packages page
       const [packages] = await db.query(query, queryParams);
-  
+
+      // Process each package description with markdown
+      packages.forEach(pkg => {
+        if (pkg.description) {
+          try {
+            // Convert markdown to HTML
+            pkg.description = marked(pkg.description);
+          } catch (e) {
+            console.error('Error parsing markdown:', e);
+            // Leave description as it is in case of an error
+          }
+        }
+      });
+
       res.render('pages/packages', {
         title: `Package Info`,
         packages,
@@ -219,6 +231,9 @@ app.get('/packages', async (req, res) => {
 
 app.get('/', async (req, res) => {
     const { batch_job_id, package_name, sort = 'package_name', order = 'DESC' } = req.query;
+    const allowedSortFields = ['package_name', 'start_time', 'stop_time', 'discovered_methods'];
+    const sanitizedSort = allowedSortFields.includes(sort) ? sort : 'package_name';
+    const sanitizedOrder = ['ASC', 'DESC'].includes(order?.toUpperCase()) ? order.toUpperCase() : 'DESC';
 
     try {
         // First query to fetch batch and exception details
@@ -244,117 +259,162 @@ app.get('/', async (req, res) => {
             ON b.batch_job_id = pr.batch_job_id 
             AND b.package_name = pr.name
         `;
-
+        
         const queryParams1 = [];
-
-        // If package_name is provided, filter by it
+      
         if (package_name) {
-            query1 += ` WHERE b.package_name LIKE ?`;
-            queryParams1.push(`%${package_name}%`);
+          query1 += `
+            WHERE b.start_time = (
+              SELECT MAX(b2.start_time) 
+              FROM pyfyzz.batches b2 
+              WHERE b2.package_name = b.package_name
+            ) 
+            AND b.package_name LIKE ?`;
+          queryParams1.push(`%${package_name}%`);
+        } else {
+          query1 += `
+            WHERE b.start_time = (
+              SELECT MAX(b2.start_time) 
+              FROM pyfyzz.batches b2 
+              WHERE b2.package_name = b.package_name
+            )`;
         }
+      
+      query1 += ` GROUP BY b.batch_job_id, pr.version, pr.home_page, pr.project_url, pr.project_urls ORDER BY ${sort} ${order};`;
 
-        query1 += ` GROUP BY b.batch_job_id, pr.version, pr.home_page, pr.project_url, pr.project_urls ORDER BY ${sort} ${order};`;
-
-        // Second query to fetch topologies and module information
-        let query2 = `
-            SELECT 
-              b.batch_job_id, 
-              b.package_name,
-              COALESCE(pr.name, 'Unknown') AS package_name,
-              COUNT(DISTINCT t.module_name) AS ModulesCount,
-              GROUP_CONCAT(DISTINCT t.module_name ORDER BY t.module_name DESC SEPARATOR ', ') AS Modules,
-              COUNT(DISTINCT t.class_name) AS ClassesCount,
-              GROUP_CONCAT(DISTINCT t.class_name ORDER BY t.class_name DESC SEPARATOR ', ') AS Classes,
-              COUNT(DISTINCT t.method_name) AS MethodsCount,
-              GROUP_CONCAT(DISTINCT t.method_name ORDER BY t.method_name DESC SEPARATOR ', ') AS Methods
-            FROM pyfyzz.batches b
-            LEFT JOIN pyfyzz.package_records pr
-              ON b.batch_job_id = pr.batch_job_id 
-              AND b.package_name = pr.name
-            LEFT JOIN pyfyzz.topologies t
-              ON b.batch_job_id = t.batch_job_id
-              AND b.package_name = t.package_name
-            GROUP BY b.batch_job_id, b.package_name, pr.name
-            ORDER BY b.start_time DESC;
-        `;
-
-        const queryParams2 = [];
-
-        // Third query to fetch fuzz results information
-        let query3 = `
+      // Second query to fetch topologies and module information
+      let query2 = `
           SELECT 
             b.batch_job_id, 
             b.package_name,
-            pr.name,
-            COUNT(DISTINCT fr.method_name) AS FuzzedMethodsCount,
-            GROUP_CONCAT(DISTINCT fr.method_name ORDER BY fr.method_name DESC SEPARATOR ', ') AS FuzzedMethods,
-            fr.encoded_source as EncodedSource,
-            fr.exception as ExceptionMessage,
-            fr.inputs as ExceptionInputs,
-            fr.exception_type as ExceptionType,
-            fr.is_python_exception as IsPythonException
+            COALESCE(pr.name, 'Unknown') AS package_name,
+            COUNT(DISTINCT t.module_name) AS ModulesCount,
+            GROUP_CONCAT(DISTINCT t.module_name ORDER BY t.module_name DESC SEPARATOR ', ') AS Modules,
+            COUNT(DISTINCT t.class_name) AS ClassesCount,
+            GROUP_CONCAT(DISTINCT t.class_name ORDER BY t.class_name DESC SEPARATOR ', ') AS Classes,
+            COUNT(DISTINCT t.method_name) AS MethodsCount,
+            GROUP_CONCAT(DISTINCT t.method_name ORDER BY t.method_name DESC SEPARATOR ', ') AS Methods
           FROM pyfyzz.batches b
           LEFT JOIN pyfyzz.package_records pr
             ON b.batch_job_id = pr.batch_job_id 
             AND b.package_name = pr.name
-          LEFT JOIN pyfyzz.fuzz_results fr
-            ON b.batch_job_id = fr.batch_job_id
-            AND b.package_name = fr.package_name
-          WHERE fr.is_python_exception = 1
-          GROUP BY 
-            b.batch_job_id, 
-            b.package_name,
-            pr.name, 
-            fr.exception, 
-            fr.inputs,
-            fr.encoded_source,
-            fr.exception_type,
-            fr.is_python_exception
+          LEFT JOIN pyfyzz.topologies t
+            ON b.batch_job_id = t.batch_job_id
+            AND b.package_name = t.package_name
+          GROUP BY b.batch_job_id, b.package_name, pr.name
           ORDER BY b.start_time DESC;
-        `;
+      `;
 
-        const queryParams3 = [];
+      const queryParams2 = [];
 
-        // Run all three queries concurrently using Promise.all
-        const [results1, results2, results3] = await Promise.all([
-            db.query(query1, queryParams1),
-            db.query(query2, queryParams2),
-            db.query(query3, queryParams3)
-        ]);
-        // Base64 decode the EncodedSource in results3
-        results3[0].forEach(result => {
-            if (result.EncodedSource) {
-                try {
-                    const decoded = Buffer.from(result.EncodedSource, 'base64').toString('utf-8');
-                    result.DecodedSource = escapeHtml(decoded);
-                } catch (e) {
-                    result.DecodedSource = 'Source Code Unknown';
-                }
-            } else {
-                result.DecodedSource = 'No Source Available';
+      // Third query to fetch fuzz results information
+      let query3 = `
+        SELECT 
+          b.batch_job_id, 
+          b.package_name,
+          pr.name,
+          fr.method_name as FuzzedMethods,
+          fr.encoded_source as EncodedSource,
+          fr.improved_source as ImprovedEncodedSource,
+          fr.exception_traceback as EncodedTraceback,
+          fr.exception as ExceptionMessage,
+          fr.inputs as ExceptionInputs,
+          fr.exception_type as ExceptionType,
+          fr.is_python_exception as IsPythonException
+        FROM pyfyzz.batches b
+        LEFT JOIN pyfyzz.package_records pr
+        ON b.batch_job_id = pr.batch_job_id 
+        AND b.package_name = pr.name
+        LEFT JOIN pyfyzz.fuzz_results fr
+        ON b.batch_job_id = fr.batch_job_id
+        AND b.package_name = fr.package_name
+        WHERE fr.is_python_exception = 1
+        GROUP BY 
+          b.batch_job_id, 
+          b.package_name,
+          pr.name,
+            fr.method_name,
+          fr.exception, 
+          fr.inputs,
+          fr.encoded_source,
+          fr.improved_source,
+            fr.exception_traceback,
+          fr.exception_type,
+          fr.is_python_exception
+        ORDER BY fr.method_name DESC;
+      `;
+
+      const queryParams3 = [];
+
+      // Run all three queries concurrently using Promise.all
+      const [results1, results2, results3] = await Promise.all([
+          db.query(query1, queryParams1),
+          db.query(query2, queryParams2),
+          db.query(query3, queryParams3)
+      ]);
+
+      if (results1.status === "rejected") {
+        throw new Error(`Error fetching batch and exception details: ${results1.reason}`);
+      }
+      if (results2.status === "rejected") {
+        throw new Error(`Error fetching module and topology info: ${results2.reason}`);
+      }
+      if (results3.status === "rejected") {
+        throw new Error(`Error fetching fuzz results: ${results3.reason}`);
+      }
+      else {
+      };
+
+      results3[0].forEach(result => {
+        if (result.EncodedSource) {
+            try {
+                const decoded = Buffer.from(result.EncodedSource, 'base64').toString('utf-8');
+                result.DecodedSource = escapeHtml(decoded);
+            } catch (e) {
+                result.DecodedSource = 'Source Code Unknown';
             }
-        });
+        } else {
+            result.DecodedSource = 'No Source Available';
+        }
+      });
 
-        if (results1.status === "rejected") {
-            throw new Error(`Error fetching batch and exception details: ${results1.reason}`);
-          }
-          if (results2.status === "rejected") {
-            throw new Error(`Error fetching module and topology info: ${results2.reason}`);
-          }
-          if (results3.status === "rejected") {
-            throw new Error(`Error fetching fuzz results: ${results3.reason}`);
-          }     
-        // Pass all three results to the EJS template
-        res.render('pages/home', {
-            title: 'PyFyzz Home',
-            results1: results1[0], // Results from the first query
-            results2: results2[0], // Results from the second query
-            results3: results3[0], // Results from the third query
-            sort: sort,
-            order: order,
-            package_name: package_name || '', // Pass the current search term back to the template
-            batch_job_id: batch_job_id || '' // Pass the batch_job_id if provided
-        });
+      results3[0].forEach(result => {
+        if (result.ImprovedEncodedSource) {
+            try {
+                const decoded = Buffer.from(result.ImprovedEncodedSource, 'base64').toString('utf-8');
+                result.DecodedImprovedSource = escapeHtml(decoded);
+            } catch (e) {
+                result.DecodedImprovedSource = 'Improved Source Unknown';
+            }
+        } else {
+            result.DecodedImprovedSource = 'No Improved Source Available';
+        }
+      });
+
+      results3[0].forEach(result => {
+        if (result.EncodedTraceback) {
+            try {
+                const decoded = Buffer.from(result.EncodedTraceback, 'base64').toString('utf-8');
+                result.DecodedTraceback = escapeHtml(decoded);
+            } catch (e) {
+                result.DecodedTraceback = 'Full Traceback Unknown';
+            }
+        } else {
+            result.DecodedTraceback = 'No Traceback Available';
+        }
+      });
+      
+      // Pass all three results to the EJS template
+      res.render('pages/home', {
+          title: 'PyFyzz Home',
+          results1: results1[0], // Results from the first query
+          results2: results2[0], // Results from the second query
+          results3: results3[0], // Results from the third query
+          sort: sanitizedSort,
+          order: sanitizedOrder,
+          package_name: package_name || '', // Pass the current search term back to the template
+          batch_job_id: batch_job_id || '' // Pass the batch_job_id if provided
+      });
 
     } catch (error) {
         console.error('Error executing queries:', error);

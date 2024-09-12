@@ -68,8 +68,10 @@ class FuzzResults(Base):
     exception = Column(String(255), nullable=True)
     exception_type = Column(String(255), nullable=True)
     is_python_exception = Column(Boolean, nullable=True)
-    encoded_source = Column(Text, nullable=True)
+    encoded_source = Column(LONGTEXT, nullable=True)
+    improved_source = Column(LONGTEXT, nullable=True)
     return_value = Column(LONGTEXT, nullable=True)
+    exception_traceback = Column(LONGTEXT, nullable=True)
 
     batch_job = relationship("BatchJob", back_populates="fuzz_results")
 

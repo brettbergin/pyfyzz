@@ -119,6 +119,8 @@ class FuzzResultSerializer:
                         "exception_type": str(fuzz_case.exception_type),
                         "is_python_exception": bool(fuzz_case.is_python_exception),
                         "encoded_source": fuzz_case.encoded_source,
+                        "improved_source": fuzz_case.improved_source,
+                        "exception_traceback": fuzz_case.exception_traceback,
                     }
                 )
             output_dict["results"].append(method_result_dict)
@@ -143,6 +145,8 @@ class FuzzResultSerializer:
                         "exception_type": str(fuzz_case.exception_type),
                         "is_python_exception": bool(fuzz_case.is_python_exception),
                         "encoded_source": fuzz_case.encoded_source,
+                        "improved_source": fuzz_case.improved_source,
+                        "exception_traceback": fuzz_case.exception_traceback,
                     }
                 )
         return flattened_list

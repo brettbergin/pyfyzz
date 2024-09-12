@@ -15,7 +15,7 @@ from .fuzzer import Fuzzer
 from .logger import PyFyzzLogger
 from .arguments import Arguments
 from .analyzer import PythonPackageAnalyzer
-from .exports import FileExporter
+# from .exports import FileExporter
 from .databases import DatabaseExporter
 from .validators import PyFyzzInputValidator
 from .models.data_models import PackageInfo, DBOptions
@@ -23,7 +23,7 @@ from .serializers import PackageInfoSerializer, FuzzResultSerializer
 
 
 def fuzz_package(
-    logger: PyFyzzLogger, package_info: PackageInfo
+    logger: PyFyzzLogger, package_info: PackageInfo, openai_api_key: str
 ) -> Tuple[Dict, pd.DataFrame, Dict]:
     """
     Attempts to invoke the package fuzzer against the package info
@@ -32,7 +32,7 @@ def fuzz_package(
     returns: Fuzzer or sys.exit(-1)
     """
 
-    fuzzer = Fuzzer(logger=logger, package_under_test=package_info)
+    fuzzer = Fuzzer(logger=logger, package_under_test=package_info, openai_api_key=openai_api_key)
     ran = fuzzer.run()
     if not ran:
         logger.log(
@@ -201,9 +201,16 @@ def main() -> None:
     logger = PyFyzzLogger(name="pyfyzz", level="info")
     logger.log("info", f"[+] Starting pyfyzz @: {start_time}.")
 
-    file_exporter = FileExporter(logger=logger)
+    # file_exporter = FileExporter(logger=logger)
 
     batch_job_id = str(uuid.uuid4())
+
+    openai_api_key = os.environ.get("OPENAI_API_KEY")
+    if not openai_api_key:
+        logger.log(
+            "error", "[-] Unable to obtain openai API key from env vars. quitting."
+        )
+        sys.exit(-1)
 
     package_name, ignore_private, output_format = valid_user_input(logger)
 
@@ -212,7 +219,7 @@ def main() -> None:
     )
 
     fuzz_results_dict, fuzz_results_df, fuzz_counts = fuzz_package(
-        logger, package_info=pkg_info
+        logger, package_info=pkg_info, openai_api_key=openai_api_key
     )
 
     fuzzed_method_count = len(
@@ -233,13 +240,13 @@ def main() -> None:
         counts=fuzz_counts, batch_job_id=batch_job_id, pkg_name=package_name
     )
 
-    if output_format == "json":
-        file_exporter.export_to_json(pkg_dict, f"topology_{package_name}.json")
-        file_exporter.export_to_json(fuzz_results_dict, f"results_{package_name}.json")
+    # if output_format == "json":
+    #     file_exporter.export_to_json(pkg_dict, f"topology_{package_name}.json")
+    #     file_exporter.export_to_json(fuzz_results_dict, f"results_{package_name}.json")
 
-    elif output_format == "yaml":
-        file_exporter.export_to_yaml(pkg_dict, f"topology_{package_name}.yaml")
-        file_exporter.export_to_yaml(fuzz_results_dict, f"results_{package_name}.yaml")
+    # elif output_format == "yaml":
+    #     file_exporter.export_to_yaml(pkg_dict, f"topology_{package_name}.yaml")
+    #     file_exporter.export_to_yaml(fuzz_results_dict, f"results_{package_name}.yaml")
 
     stop_time = datetime.datetime.now()
     db_exporter.update_job_complete(

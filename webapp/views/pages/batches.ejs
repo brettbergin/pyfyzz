@@ -72,7 +72,7 @@
                   <a href="/packages?batch_job_id=<%= batch.batch_job_id %>"><%= batch.package_name || 'Unknown' %></a>
                 </td>
                 <td>
-                  <span class="badge <%= batch.batch_status === 'completed' ? 'badge-success' : 'badge-warning' %>">
+                  <span>
                     <%= batch.batch_status.charAt(0).toUpperCase() + batch.batch_status.slice(1) %>
                   </span>
                 </td>

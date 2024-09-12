@@ -41,10 +41,18 @@
                 <div class="row">
 
                   <div class="col-md-4">
-                    <table class="table table-striped">
+                    <table class="table table-responsive">
                       <tbody>
                         <tr>
-                          <th>Package Name</th>
+                          <th>
+                            <a class="btn btn-sm btn-primary" 
+                              title="/packages?batch_job_id=<%= result1.batch_job_id %>&sort=name&order=DESC" 
+                              data-bs-toggle="tooltip"                             
+                              href="/packages?batch_job_id=<%= result1.batch_job_id %>&sort=name&order=DESC">
+                                Package
+                            </a>
+                            <i class="bi bi-link"></i>
+                          </th>
                           <td><code><%= result1.package_name || 'Unknown' %></code></td>
                         </tr>
                         <tr>
@@ -55,7 +63,8 @@
                           <th>Homepage</th>
                           <td>
                             <% if (result1.home_page) { %>
-                              <a 
+                              
+                              <a class="btn btn-sm btn-secondary" 
                                 href="<%= result1.home_page %>" 
                                 title="<%= result1.home_page %>" 
                                 data-bs-toggle="tooltip" 
@@ -64,6 +73,7 @@
                                 rel="noopener noreferrer">
                                 link
                               </a>
+                              <i class="bi bi-box-arrow-up-right"></i>
                             <% } else { %>
                               <%= result1.home_page || 'Unknown' %>
                             <% } %>
@@ -73,7 +83,7 @@
                           <th>Project URL</th>
                           <td>
                             <% if (result1.project_url) { %>
-                              <a 
+                              <a class="btn btn-sm btn-secondary" 
                                 href="<%= result1.project_url %>" 
                                 title="<%= result1.project_url %>" 
                                 data-bs-toggle="tooltip" 
@@ -82,6 +92,7 @@
                                 rel="noopener noreferrer">
                                 link
                               </a>
+                              <i class="bi bi-box-arrow-up-right"></i>
                             <% } else { %>
                               <%= result1.project_url || 'Unknown' %>
                             <% } %>
@@ -92,23 +103,39 @@
                   </div>
                   
                   <div class="col-md-4">
-                    <table class="table table-striped">
+                    <table class="table table-responsive">
                       <tbody>
 
                         <tr>
                           <th>Job Status</th>
                           <td>
-                            <span style="color: <%= result1.batch_status === 'completed' ? 'green' : 'red' %>;">
-                              <strong><%= result1.batch_status.charAt(0).toUpperCase() + result1.batch_status.slice(1) %></strong>
+                            <span>
+                              <%= result1.batch_status.charAt(0).toUpperCase() + result1.batch_status.slice(1) %> 
                             </span>
                           </td>
                         </tr>
                         <tr></tr>
                           <th>Job ID</th>
                           <td>
-                            <a href="/batches?batch_job_id=<%= result1.batch_job_id %>">
-                              <%= result1.batch_job_id.slice(-10) %>
+                            <a class="btn btn-sm btn-secondary" 
+                              title="/batches?batch_job_id=<%= result1.batch_job_id %>" 
+                              data-bs-toggle="tooltip" 
+                              href="/batches?batch_job_id=<%= result1.batch_job_id %>">
+                                <%= result1.batch_job_id.slice(-10) %>
                             </a>
+                            <i class="bi bi-link"></i>
+                          </td>
+                        </tr>
+                        <tr></tr>
+                          <th>Job Summary</th>
+                          <td>
+                            <a class="btn btn-sm btn-secondary" 
+                              title="/batches/summaries?batch_job_id=<%= result1.batch_job_id %>"
+                              data-bs-toggle="tooltip"
+                              href="/batches/summaries?batch_job_id=<%= result1.batch_job_id %>">
+                                <%= result1.batch_job_id.slice(-10) %>
+                            </a>
+                            <i class="bi bi-link"></i>
                           </td>
                         </tr>
                         <tr>
@@ -154,51 +181,78 @@
                           Package Composition
                         </button>
                       </h2>
-                      <div id="collapseComposition<%= index %>" class="accordion-collapse collapse" aria-labelledby="headingComposition<%= index %>" data-bs-parent="#nestedAccordion<%= index %>">
+                      <div id="collapseComposition<%= index %>" class="accordion-collapse collapse" aria-labelledby="headingComposition<%= index %>">
                         <div class="accordion-body">
-                          <div class="row">
-                            <div class="col-md-6">
-                              <!-- Modules Section -->
-                              <p><strong>Modules (<%= correspondingResult2.ModulesCount %>):</strong></p> <!-- Display the module count -->
-                              <% if (correspondingResult2.Modules) { %>
-                                <ul>
-                                  <% let modules = correspondingResult2.Modules.split(', '); %>
-                                  <% modules.forEach(module => { %>
-                                    <li><%= module %></li> <!-- Each module as a list item -->
-                                  <% }) %>
-                                </ul>
-                              <% } else { %>
-                                <p>No modules available</p>
-                              <% } %>
-
-                              <!-- Classes Section -->
-                              <p><strong>Classes (<%= correspondingResult2.ClassesCount %>):</strong></p> <!-- Display the class count -->
-                              <% if (correspondingResult2.Classes) { %>
-                                <ul>
-                                  <% let classes = correspondingResult2.Classes.split(', '); %>
-                                  <% classes.forEach(className => { %>
-                                    <li><%= className %></li> <!-- Each class as a list item -->
-                                  <% }) %>
-                                </ul>
-                              <% } else { %>
-                                <p>No classes available</p>
-                              <% } %>
+                          <div class="accordion" id="compositionAccordion<%= index %>">
+                            <div class="accordion-item">
+                              <!-- Modules Section Accordion -->
+                              <h2 class="accordion-header" id="headingModules<%= index %>">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseModules<%= index %>" aria-expanded="false" aria-controls="collapseModules<%= index %>">
+                                  Modules (<%= correspondingResult2.ModulesCount %>)
+                                </button>
+                              </h2>
+                              <div id="collapseModules<%= index %>" class="accordion-collapse collapse" aria-labelledby="headingModules<%= index %>">
+                                <div class="accordion-body">
+                                  <% if (correspondingResult2.Modules) { %>
+                                    <ul>
+                                      <% let modules = correspondingResult2.Modules.split(', '); %>
+                                      <% modules.forEach(module => { %>
+                                        <li><%= module %></li> <!-- Each module as a list item -->
+                                      <% }) %>
+                                    </ul>
+                                  <% } else { %>
+                                    <p>No modules available</p>
+                                  <% } %>
+                                </div>
+                              </div>
                             </div>
 
-                            <div class="col-md-6">
-                              <!-- Methods Section -->
-                              <p><strong>Methods (<%= correspondingResult2.MethodsCount %>):</strong></p> <!-- Display the method count -->
-                              <% if (correspondingResult2.Methods) { %>
-                                <ul>
-                                  <% let methods = correspondingResult2.Methods.split(', '); %>
-                                  <% methods.forEach(method => { %>
-                                    <li><%= method %></li> <!-- Each method as a list item -->
-                                  <% }) %>
-                                </ul>
-                              <% } else { %>
-                                <p>No methods available</p>
-                              <% } %>
+                            <div class="accordion-item">
+                              <!-- Classes Section Accordion -->
+                              <h2 class="accordion-header" id="headingClasses<%= index %>">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseClasses<%= index %>" aria-expanded="false" aria-controls="collapseClasses<%= index %>">
+                                  Classes (<%= correspondingResult2.ClassesCount %>)
+                                </button>
+                              </h2>
+                              <div id="collapseClasses<%= index %>" class="accordion-collapse collapse" aria-labelledby="headingClasses<%= index %>">
+                                <div class="accordion-body">
+                                  <% if (correspondingResult2.Classes) { %>
+                                    <ul>
+                                      <% let classes = correspondingResult2.Classes.split(', '); %>
+                                      <% classes.forEach(className => { %>
+                                        <li><%= className %></li> <!-- Each class as a list item -->
+                                      <% }) %>
+                                    </ul>
+                                  <% } else { %>
+                                    <p>No classes available</p>
+                                  <% } %>
+                                </div>
+                              </div>
                             </div>
+
+                            <div class="accordion-item">
+                              <!-- Methods Section Accordion -->
+                              <h2 class="accordion-header" id="headingMethods<%= index %>">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMethods<%= index %>" aria-expanded="false" aria-controls="collapseMethods<%= index %>">
+                                  Methods (<%= correspondingResult2.MethodsCount %>)
+                                </button>
+                              </h2>
+                              <div id="collapseMethods<%= index %>" class="accordion-collapse collapse" aria-labelledby="headingMethods<%= index %>">
+                                <div class="accordion-body">
+                                  <% if (correspondingResult2.Methods) { %>
+                                    <ul>
+                                      <% let methods = correspondingResult2.Methods.split(', '); %>
+                                      <% methods.forEach(method => { %>
+                                        <li><%= method %></li> <!-- Each method as a list item -->
+                                      <% }) %>
+                                    </ul>
+                                  <% } else { %>
+                                    <p>No methods available</p>
+                                  <% } %>
+                                </div>
+                              </div>
+                            </div>
+
                           </div>
                         </div>
                       </div>
@@ -225,9 +279,9 @@
                             <table class="table table-bordered table-striped table-responsive">
                               <thead>
                                 <tr>
-                                  <th style="word-wrap: break-word; word-break: break-all;">Method</th>
+                                  <th style="word-wrap: break-word; word-break: break-all;">Original Code</th>
+                                  <th style="word-wrap: break-word; word-break: break-all;">Improved Code</th>
                                   <th style="word-wrap: break-word; word-break: break-all;">Exception Type</th>
-                                  <th style="word-wrap: break-word; word-break: break-all;">Exception Message</th>
                                   <th style="word-wrap: break-word; word-break: break-all;">Fuzzing Arguments</th>
                                 </tr>
                               </thead>
@@ -240,24 +294,40 @@
                                         <td style="word-wrap: break-word; word-break: break-all;">
                                           <% if (result3.DecodedSource) { %>
                                             <!-- Method name becomes a link to open the modal -->
+                                            <i class="bi bi-exclamation-octagon text-danger"></i>
                                             <a href="#" 
-                                              class="btn btn-link text-decoration-none" 
+                                              title="view source" 
+                                              class="btn btn-sm btn-danger text-decoration-none" 
                                               data-bs-toggle="modal" 
                                               data-bs-target="#sourceCodeModal" 
                                               data-source="<%- result3.DecodedSource %>">
-                                              <%= fuzzedMethod %>
+                                                <%= fuzzedMethod %>
                                             </a>
                                           <% } else { %>
                                             <%= fuzzedMethod %> <!-- Just display method name if no source available -->
                                           <% } %>
                                         </td>
                                         <td style="word-wrap: break-word; word-break: break-all;">
+                                          <% if (result3.DecodedImprovedSource) { %>
+                                            <!-- Method name becomes a link to open the modal -->
+                                            <i class="bi bi-bandaid text-success"></i>
+                                            <a href="#"
+                                              title="view source" 
+                                              class="btn btn-sm btn-success text-decoration-none" 
+                                              data-bs-toggle="modal" 
+                                              data-bs-target="#sourceCodeModal" 
+                                              data-source="<%- result3.DecodedImprovedSource %>">
+                                              <%= fuzzedMethod %>
+                                            </a>
+                                          <% } else { %>
+                                            (link unavailable)
+                                          <% } %>
+                                        </td>
+                                        <td style="word-wrap: break-word; word-break: break-all;" data-bs-toggle="tooltip" data-bs-placement="top" title="<%= result3.ExceptionMessage || '' %>">
+                                          <i class="bi bi-info-circle"></i>
                                           <%= result3.ExceptionType || 'No Exception Type' %>
                                         </td>
-                                        <td style="word-wrap: break-word; word-break: break-all;">
-                                          <%= result3.ExceptionMessage || 'No Exception' %>
-                                        </td>
-                                        <td style="word-wrap: break-word; word-break: break-all;" data-bs-toggle="tooltip" data-bs-placement="top" title="<%= result3.ExceptionInputs %>">
+                                        <td style="word-wrap: break-word; word-break: break-all;" data-bs-toggle="tooltip" data-bs-placement="top" title="<%= result3.ExceptionInputs || '' %>">
                                           <% 
                                             try { 
                                               let inputs = JSON.parse(result3.ExceptionInputs); // Parse the ExceptionInputs JSON
@@ -331,8 +401,10 @@
         </div>
       <% } %>
     </div>
+
     <div class="card-footer text-muted">
       <p>Displaying <strong><%= results1.length %></strong> packages</p>
     </div>
+
   </div>
 </div>

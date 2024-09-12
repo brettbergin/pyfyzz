@@ -48,10 +48,7 @@
                 </a>
               </th>
               <th>
-                <a href="?sort=summary&order=<%= sort === 'summary' && order === 'ASC' ? 'DESC' : 'ASC' %>">
-                  Summary
-                  <%= sort === 'summary' ? (order === 'ASC' ? '▲' : '▼') : '' %>
-                </a>
+                <p>Details</p>
               </th>
             </tr>
           </thead>
@@ -59,29 +56,59 @@
             <% packages.forEach(package => { %>
               <tr>
                 <td>
-                  <a href="/batches?batch_job_id=<%= package.batch_job_id %>"><%= package.batch_job_id.slice(-10) %></a>
+                  <a class="btn btn-sm btn-primary" href="/batches?batch_job_id=<%= package.batch_job_id %>">
+                    <%= package.batch_job_id.slice(-10) %>
+                  </a>
                 </td>
                 <td><%= package.name || 'Unknown' %></td>
                 <td><%= package.author || 'Unknown' %></td>
                 <td><%= package.version || 'Unknown' %></td>
                 <td>
-                    <% if (package.home_page) { %>
-                      <a href="<%= package.home_page %>" target="_blank"><%= package.home_page %></a>
-                    <% } else { %>
-                      Unknown
-                    <% } %>
+                  <% if (package.home_page) { %>
+                    <a href="<%= package.home_page %>" target="_blank"><%= package.home_page %></a>
+                  <% } else { %>
+                    Unknown
+                  <% } %>
                 </td>
                 <td>
-                    <% if (package.project_url) { %>
-                      <a href="<%= package.project_url %>" target="_blank"><%= package.project_url %></a>
-                    <% } else { %>
-                      Unknown
-                    <% } %>
+                  <% if (package.project_url) { %>
+                    <a href="<%= package.project_url %>" target="_blank"><%= package.project_url %></a>
+                  <% } else { %>
+                    Unknown
+                  <% } %>
                 </td>
-                <td><%= package.summary ? package.summary.slice(0, 250) : 'No summary available' %></td>
+                <td>
+                  <% 
+                    // Build the string for the modal content
+                    let modalContent = `
+                      <h2>Package Name: ${package.name || 'Unknown'}</h2>
+                      <p><strong>Author:</strong> ${package.author || 'Unknown'}</p>
+                      <p><strong>Author Email:</strong> ${package.author_email || 'Unknown'}</p>
+                      <p><strong>Version:</strong> ${package.version || 'Unknown'}</p>
+                      <p><strong>Homepage:</strong> <a href='${package.home_page}' target='_blank'>${package.home_page || 'Unknown'}</a></p>
+                      <p><strong>Project URL:</strong> <a href='${package.project_url}' target='_blank'>${package.project_url || 'Unknown'}</a></p>
+                      <p><strong>Keywords:</strong> ${package.keywords || 'Unknown'}</p>
+                      <p><strong>Summary:</strong> ${package.summary || 'Unknown'}</p>
+                      <p><strong>Description:</p></strong>
+                      <div>${package.description || 'No description available'}</div><br>
+                      <p><strong>License:</strong> ${package.license || 'Unknown'}</p>
+                      <p><strong>URLs:</strong> ${package.project_urls || 'Unknown'}</p>
+                    `;
+                  %>
+            
+                  <a href="#" 
+                    title="View details" 
+                    class="btn btn-sm btn-secondary text-decoration-none" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#packageDetailsModal" 
+                    data-package="<%= modalContent %>">
+                    info
+                  </a>
+                </td>
               </tr>
             <% }) %>
           </tbody>
+          
         </table>
       </div>
       <% } else { %>
