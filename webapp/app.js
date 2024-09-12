@@ -1,9 +1,10 @@
 const express = require('express');
 const path = require('path');
 const { spawn } = require('child_process');
+const { marked } = require('marked');
 const escapeHtml = require('escape-html');
 require('dotenv').config();
-const marked = require('marked');
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;

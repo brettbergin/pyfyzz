@@ -85,15 +85,37 @@
                       <p><strong>Author:</strong> ${package.author || 'Unknown'}</p>
                       <p><strong>Author Email:</strong> ${package.author_email || 'Unknown'}</p>
                       <p><strong>Version:</strong> ${package.version || 'Unknown'}</p>
-                      <p><strong>Homepage:</strong> <a href='${package.home_page}' target='_blank'>${package.home_page || 'Unknown'}</a></p>
-                      <p><strong>Project URL:</strong> <a href='${package.project_url}' target='_blank'>${package.project_url || 'Unknown'}</a></p>
+                      <p><strong>Homepage:</strong> <a href='${package.home_page || '#'}' target='_blank'>${package.home_page || 'Unknown'}</a></p>
+                      <p><strong>Project URL:</strong> <a href='${package.project_url || '#'}' target='_blank'>${package.project_url || 'Unknown'}</a></p>
                       <p><strong>Keywords:</strong> ${package.keywords || 'Unknown'}</p>
                       <p><strong>Summary:</strong> ${package.summary || 'Unknown'}</p>
-                      <p><strong>Description:</p></strong>
-                      <div>${package.description || 'No description available'}</div><br>
+                      <p><strong>Description:</strong></p>
+                      <div>${package.description || 'No description available'}</div>
                       <p><strong>License:</strong> ${package.license || 'Unknown'}</p>
-                      <p><strong>URLs:</strong> ${package.project_urls || 'Unknown'}</p>
+                      <ul>
                     `;
+                    let foo;
+                    try {
+                      // Parse the string back to an object
+                      const projectUrls = JSON.parse(package.project_urls);
+
+                      // Use Object.entries to convert the object into an array of key-value pairs
+                      foo = Object.entries(projectUrls);
+                    } catch (error) {
+                      console.error('Error parsing project_urls:', error);
+                      foo = []; // Fallback to an empty array if parsing fails
+                    }
+                    
+                    // Loop through the inputs object and build list items
+                    for (const [key, value] of foo) {
+                      modalContent += `
+                        <li><strong>${key}:</strong> 
+                          ${value === "" ? '""' : 
+                            `<a href="${(value)}">${(value)}</a>`
+                          }
+                        </li>
+                      `;
+                    }
                   %>
             
                   <a href="#" 
