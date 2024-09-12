@@ -329,7 +329,7 @@
                                         <td style="word-wrap: break-word; word-break: break-all;" data-bs-toggle="tooltip" data-bs-placement="top" title="<%= result3.ExceptionInputs || '' %>">
                                           <% 
                                             try { 
-                                              let inputs = JSON.parse(result3.ExceptionInputs); // Parse the ExceptionInputs JSON
+                                              let inputs = JSON.parse(result3.ExceptionInputs);
                                           %>
                                               <ul>
                                                 <% for (const [key, value] of Object.entries(inputs)) { %>
