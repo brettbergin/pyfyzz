@@ -30,7 +30,7 @@ class PythonPackageAnalyzer:
             return False
 
     def enumerate_package_contents(
-        self, pkg_name: str, package: importlib.import_module, ignore_private=False
+        self, pkg_name: str, package: importlib.import_module  # , ignore_private=False
     ) -> PackageInfo:
         """
         Analyze the contents of a package or module and
@@ -45,15 +45,18 @@ class PythonPackageAnalyzer:
             for module_info in pkgutil.iter_modules(package.__path__):
                 module_name = f"{pkg_name}.{module_info.name}"
                 module = importlib.import_module(module_name)
-                self.analyze_module(module_name, module, package_info, ignore_private)
+                self.analyze_module(module_name, module, package_info)
 
         else:
-            self.analyze_module(pkg_name, package, package_info, ignore_private)
+            self.analyze_module(pkg_name, package, package_info)
 
         return package_info
 
     def analyze_module(
-        self, module_name: str, module, package_info: PackageInfo, ignore_private: bool
+        self,
+        module_name: str,
+        module,
+        package_info: PackageInfo,  # , ignore_private: bool
     ) -> None:
         """
         Analyze the classes, methods, and functions within a module and store
@@ -68,12 +71,7 @@ class PythonPackageAnalyzer:
 
                 methods = inspect.getmembers(cls, inspect.isfunction)
                 for method_name, method in methods:
-                    # Ignore methods starting with _ or __ if the flag is set
-                    if ignore_private and method_name.startswith("_"):
-                        continue
-
                     parameters = []
-
                     signature = inspect.signature(method)
 
                     # Extract and store return type
@@ -127,9 +125,6 @@ class PythonPackageAnalyzer:
 
         functions = inspect.getmembers(module, inspect.isfunction)
         for function_name, function in functions:
-            # Ignore functions starting with _ or __ if the flag is set
-            if ignore_private and function_name.startswith("_"):
-                continue
 
             signature = inspect.signature(function)
 
@@ -150,14 +145,14 @@ class PythonPackageAnalyzer:
 
         package_info.modules[module_name] = module_struct.classes
 
-    def run(self, pkg_name: str, ignore_private=False) -> PackageInfo or None:  # type: ignore
+    def run(self, pkg_name: str) -> PackageInfo or None:
         """
         Attempt to import and analyze the provided package name, returning
         structured information if successful.
         """
         try:
             package = importlib.import_module(pkg_name)
-            results = self.enumerate_package_contents(pkg_name, package, ignore_private)
+            results = self.enumerate_package_contents(pkg_name, package)
             return results
 
         except ImportError as e:

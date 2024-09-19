@@ -86,6 +86,8 @@ class FuzzCase:
     exception_type: Optional[str] = None
     is_python_exception: Optional[bool] = None
     encoded_source: Optional[str] = None
+    exception_traceback: Optional[str] = None
+    improved_source: Optional[str] = None
 
     def as_dict(self):
         return asdict(self)

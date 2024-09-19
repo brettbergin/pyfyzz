@@ -176,7 +176,7 @@ class DatabaseExporter:
                 continue
             if col == "is_python_exception":
                 continue
-    
+
             if df[col].apply(lambda x: isinstance(x, (dict, list, object))).any():
                 df[col] = df[col].apply(
                     lambda x: json.dumps(x) if isinstance(x, (dict, list)) else str(x)

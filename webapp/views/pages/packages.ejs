@@ -2,18 +2,21 @@
 
 <div class="container mt-5">
   <div class="card">
+
     <div class="card-header bg-primary text-white">
-      <h1 class="h3">Python Packages</h1>
+      <h1 class="h3">Scanned PyPI Packages</h1>
     </div>
+    
     <div class="card-body">
       <% if (packages.length > 0) { %>
-      <div class="table-responsive">
+      <div class="table-responsive mt-5">
+        <p>Displaying <strong><%= packages.length %></strong> package(s)</p>
         <table class="table table-striped table-bordered table-hover">
           <thead class="thead-dark">
             <tr>
               <th>
                 <a href="?sort=batch_job_id&order=<%= sort === 'batch_job_id' && order === 'ASC' ? 'DESC' : 'ASC' %>">
-                  Batch Job ID
+                  Scan Job ID
                   <%= sort === 'batch_job_id' ? (order === 'ASC' ? '▲' : '▼') : '' %>
                 </a>
               </th>
@@ -48,10 +51,7 @@
                 </a>
               </th>
               <th>
-                <a href="?sort=summary&order=<%= sort === 'summary' && order === 'ASC' ? 'DESC' : 'ASC' %>">
-                  Summary
-                  <%= sort === 'summary' ? (order === 'ASC' ? '▲' : '▼') : '' %>
-                </a>
+                <p>Details</p>
               </th>
             </tr>
           </thead>
@@ -59,29 +59,81 @@
             <% packages.forEach(package => { %>
               <tr>
                 <td>
-                  <a href="/batches?batch_job_id=<%= package.batch_job_id %>"><%= package.batch_job_id.slice(-10) %></a>
+                  <a class="btn btn-sm btn-primary" href="/batches?batch_job_id=<%= package.batch_job_id %>">
+                    <%= package.batch_job_id.slice(-10) %>
+                  </a>
                 </td>
                 <td><%= package.name || 'Unknown' %></td>
                 <td><%= package.author || 'Unknown' %></td>
                 <td><%= package.version || 'Unknown' %></td>
                 <td>
-                    <% if (package.home_page) { %>
-                      <a href="<%= package.home_page %>" target="_blank"><%= package.home_page %></a>
-                    <% } else { %>
-                      Unknown
-                    <% } %>
+                  <% if (package.home_page) { %>
+                    <a href="<%= package.home_page %>" target="_blank"><%= package.home_page %></a>
+                  <% } else { %>
+                    Unknown
+                  <% } %>
                 </td>
                 <td>
-                    <% if (package.project_url) { %>
-                      <a href="<%= package.project_url %>" target="_blank"><%= package.project_url %></a>
-                    <% } else { %>
-                      Unknown
-                    <% } %>
+                  <% if (package.project_url) { %>
+                    <a href="<%= package.project_url %>" target="_blank"><%= package.project_url %></a>
+                  <% } else { %>
+                    Unknown
+                  <% } %>
                 </td>
-                <td><%= package.summary ? package.summary.slice(0, 250) : 'No summary available' %></td>
+                <td>
+                  <% 
+                    // Build the string for the modal content
+                    let modalContent = `
+                      <h2>Package Name: ${package.name || 'Unknown'}</h2>
+                      <p><strong>Author:</strong> ${package.author || 'Unknown'}</p>
+                      <p><strong>Author Email:</strong> ${package.author_email || 'Unknown'}</p>
+                      <p><strong>Version:</strong> ${package.version || 'Unknown'}</p>
+                      <p><strong>Homepage:</strong> <a href='${package.home_page || '#'}' target='_blank'>${package.home_page || 'Unknown'}</a></p>
+                      <p><strong>Project URL:</strong> <a href='${package.project_url || '#'}' target='_blank'>${package.project_url || 'Unknown'}</a></p>
+                      <p><strong>Keywords:</strong> ${package.keywords || 'Unknown'}</p>
+                      <p><strong>Summary:</strong> ${package.summary || 'Unknown'}</p>
+                      <p><strong>Description:</strong></p>
+                      <div>${package.description || 'No description available'}</div>
+                      <p><strong>License:</strong> ${package.license || 'Unknown'}</p>
+                      <ul>
+                    `;
+                    let foo;
+                    try {
+                      // Parse the string back to an object
+                      const projectUrls = JSON.parse(package.project_urls);
+
+                      // Use Object.entries to convert the object into an array of key-value pairs
+                      foo = Object.entries(projectUrls);
+                    } catch (error) {
+                      console.error('Error parsing project_urls:', error);
+                      foo = []; // Fallback to an empty array if parsing fails
+                    }
+                    
+                    // Loop through the inputs object and build list items
+                    for (const [key, value] of foo) {
+                      modalContent += `
+                        <li><strong>${key}:</strong> 
+                          ${value === "" ? '""' : 
+                            `<a href="${(value)}">${(value)}</a>`
+                          }
+                        </li>
+                      `;
+                    }
+                  %>
+            
+                  <a href="#" 
+                    title="View details" 
+                    class="btn btn-sm btn-secondary text-decoration-none" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#packageDetailsModal" 
+                    data-package="<%= modalContent %>">
+                    info
+                  </a>
+                </td>
               </tr>
             <% }) %>
           </tbody>
+          
         </table>
       </div>
       <% } else { %>
@@ -91,7 +143,7 @@
       <% } %>
     </div>
     <div class="card-footer text-muted">
-        <p>Displaying <%= packages.length %> packages</p>
+        <p>Displaying <strong><%= packages.length %></strong> known PyPI packages</p>
     </div>
   </div>
 </div>

@@ -6,6 +6,7 @@
   <title><%= title %></title>
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/default.min.css" rel="stylesheet">
   <style>
     /* Reset margin and padding */
@@ -23,35 +24,60 @@
     }
   </style>
   <style>
+    /* Ensures that line breaks are preserved */
     pre {
-      white-space: pre-wrap; /* Ensures that line breaks are preserved */
+      white-space: pre-wrap; 
     }
   </style>
 </head>
 <body>
   <!-- Navigation Bar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
-    <a class="navbar-brand" href="/">PyFyzz</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ml-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="/batches">Batches</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/batches/summaries">Batch Summaries</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/packages">Packages</a>
-        </li>
-      </ul>
-
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">PyFyzz</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      
+      <!-- Navbar content that collapses -->
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link" href="/batches">Scans</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/batches/summaries">Scan Summaries</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/packages">PyPI Packages</a>
+          </li>
+        </ul>
+  
+        <!-- Move this to the right -->
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              More
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <li><a class="dropdown-item" href="#">Github</a></li>
+              <li><a class="dropdown-item" href="#">Docs</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#">Support</a></li>
+            </ul>
+          </li>
+  
+          <!-- Search form (optional) -->
+          <form class="d-flex ms-3" role="search" action="/search" method="GET">
+            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" name="query">
+            <button class="btn btn-outline-light" type="submit">Search</button>
+          </form>
+        </ul>
+      </div>
     </div>
-
   </nav>
-
+  
+  
   <!-- Modal structure for displaying source code -->
   <div class="modal fade" id="sourceCodeModal" tabindex="-1" aria-labelledby="sourceCodeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -68,12 +94,29 @@
           </div>
        </div>
     </div>
- </div>
+  </div>
 
-  <!-- Footer
-  <footer class="footer text-center mt-5">
-    <p>&copy; 2024 PyFyzz WebApp. All rights reserved.</p>
-  </footer> -->
+   <!-- Modal structure for displaying source code -->
+  <div class="modal fade" id="packageDetailsModal" tabindex="-1" aria-labelledby="packageDetailsModal" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+       <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="packageDetailsModalLabel">PyPI Package Information</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="packageDetailsContent">
+            <pre id="packageDetailsContent"></pre>
+          </div>
+          <div class="modal-footer">
+             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
@@ -95,8 +138,29 @@
       }
     });
   </script>
+  <script>
+    // Listen for clicks on "info" buttons and update the modal content
+    const packageModal = document.getElementById('packageDetailsModal');
+    packageModal.addEventListener('show.bs.modal', function (event) {
+      // Button that triggered the modal
+      const button = event.relatedTarget;
+      // Extract info from data-* attributes
+      const modalContent = button.getAttribute('data-package');
+      // Update the modal's content
+      const modalBody = packageModal.querySelector('.modal-body');
+      modalBody.innerHTML = modalContent;
+    });
+  </script>
+  <script>
+    function goBack() {
+      window.history.back();
+    }
+  </script>
   <script src="/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
   <script>hljs.highlightAll();</script>
 </body>
+<!-- <footer class="footer text-center mt-5">
+  <p>&copy; 2024 PyFyzz WebApp. All rights reserved.</p>
+</footer> -->
 </html>
