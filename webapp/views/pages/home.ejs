@@ -1,6 +1,6 @@
 <%- include('../layouts/main') %>
 
-<div class="container mt-5">
+<div class="container-fluid mt-5">
   <div class="card">
     <div class="card-header bg-primary text-white">
       <h1 class="h3">Package Analysis</h1>
@@ -278,10 +278,12 @@
                             <table class="table table-bordered table-striped table-responsive">
                               <thead>
                                 <tr>
+                                  <th style="word-wrap: break-word; word-break: break-all;">Exception Traceback</th>
                                   <th style="word-wrap: break-word; word-break: break-all;">Original Code</th>
                                   <th style="word-wrap: break-word; word-break: break-all;">Improved Code</th>
                                   <th style="word-wrap: break-word; word-break: break-all;">Exception Type</th>
                                   <th style="word-wrap: break-word; word-break: break-all;">Fuzzing Arguments</th>
+                                  <th style="word-wrap: break-word; word-break: break-all;">MR/PR</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -290,6 +292,16 @@
                                     <% let fuzzedMethods = result3.FuzzedMethods.split(', '); %>
                                     <% fuzzedMethods.forEach(fuzzedMethod => { %>
                                       <tr>
+                                        <td>
+                                          <a href="#" 
+                                              title="view source" 
+                                              class="btn btn-sm btn-primary text-decoration-none" 
+                                              data-bs-toggle="modal" 
+                                              data-bs-target="#sourceCodeModal" 
+                                              data-source="<%- result3.DecodedTraceback %>">
+                                                View Full Traceback
+                                          </a>
+                                        </td>
                                         <td style="word-wrap: break-word; word-break: break-all;">
                                           <% if (result3.DecodedSource) { %>
                                             <!-- Method name becomes a link to open the modal -->
@@ -357,6 +369,10 @@
                                               <%= result3.ExceptionInputs.substring(0, 100) || 'No Inputs' %>... <!-- Fallback if parsing fails -->
                                           <% } %>
                                         </td>
+                                        <td style="word-wrap: break-word; word-break: break-all;">
+                                          <a class="btn btn-sm btn-warning" href="/pull_requests/new?package_name=<%= result3.package_name %>&record_id=<%= result3.record_id %>">Create</a>
+                                        </td>
+
                                       </tr>
                                     <% }) %>
                                   <% } else { %>

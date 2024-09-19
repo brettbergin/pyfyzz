@@ -12,26 +12,40 @@ class Arguments:
         Parse command-line arguments for the script.
         """
         parser = argparse.ArgumentParser(
-            description="PyFyzz: Analyze a Python package's structure."
+            prog="pyfyzz", description="PyFyzz: Analyze a Python package's structure."
         )
-        parser.add_argument(
+
+        # Create subparsers for 'scan' and 'create_pull_request'
+        subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+        # Subparser for 'scan' command
+        scan_parser = subparsers.add_parser("scan", help="Scan a Python package")
+        scan_parser.add_argument(
             "--package_name",
             "-p",
             type=str,
             required=True,
             help="Name of the Python package to analyze.",
         )
-        parser.add_argument(
-            "--output_format",
-            "-o",
+
+        # Subparser for 'github_pull_request' command
+        pr_parser = subparsers.add_parser(
+            "github_pull_request", help="Create a pull request"
+        )
+        pr_parser.add_argument(
+            "--package_name",
+            "-p",
             type=str,
             required=True,
-            help="Output format to use.",
+            help="Name of the Python package to analyze.",
         )
-        parser.add_argument(
-            "--ignore_private",
-            "-i",
-            action="store_true",
-            help="Ignore internal methods or functions.",
+        pr_parser.add_argument(
+            "--record_id",
+            "-r",
+            type=str,
+            required=True,
+            help="Record ID of the Python package to create PR for.",
         )
+
+        # Add any additional arguments specific to each subcommand if needed
         return parser.parse_args()

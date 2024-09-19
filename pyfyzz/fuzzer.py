@@ -27,10 +27,7 @@ class Fuzzer:
         self.fuzz_results = FuzzResult(name=package_under_test.name)
 
         # todo -> Update API Key To OS ENV VAR
-        self.ai = ChatGPTInterface(
-            api_key=self.openai_api_key,
-            logger=self.logger
-        )
+        self.ai = ChatGPTInterface(api_key=self.openai_api_key, logger=self.logger)
 
     def _check_for_specific_types(self) -> bool:
         """
@@ -103,11 +100,10 @@ class Fuzzer:
 
         return import_statement
 
-
     def _is_py_standard_exception(self, exception_type: str) -> bool:
         """
         Determine if the provided exception type is a standard Python exception.
-        
+
         Args:
         exception_type (type): The exception class to check.
 
@@ -115,8 +111,8 @@ class Fuzzer:
         bool: True if it's a standard Python exception, False if it's likely a custom exception.
         """
         return exception_type in [
-            exc.__name__ for exc 
-            in builtins.__dict__.values() 
+            exc.__name__
+            for exc in builtins.__dict__.values()
             if isinstance(exc, type) and issubclass(exc, BaseException)
         ]
 
@@ -293,27 +289,32 @@ class Fuzzer:
 
         # Suggest improvement via AI and encode result
         improved_source = self.ai.suggest_improvement(
-                source_code=encoded_source, 
-                code_path=f"{module_name}::{class_name}::{method_name}").encode('utf-8')
+            source_code=encoded_source,
+            code_path=f"{module_name}::{class_name}::{method_name}",
+        ).encode("utf-8")
 
         for fuzzed_inputs in fuzzed_inputs_sets:
             test_case = FuzzCase(inputs=fuzzed_inputs, encoded_source=encoded_source)
             try:
                 test_case.return_value = method(**fuzzed_inputs)
-                
+
             except Exception as e:
                 self.exception_count[type(e).__name__] += 1
                 test_case.exception = str(e)
                 test_case.exception_type = type(e).__name__
                 test_case.exception_traceback = base64.b64encode(
-                    traceback.format_exc().encode('utf-8')
-                ).decode('utf-8')
-                test_case.is_python_exception = self._is_py_standard_exception(exception_type=type(e).__name__)
+                    traceback.format_exc().encode("utf-8")
+                ).decode("utf-8")
+                test_case.is_python_exception = self._is_py_standard_exception(
+                    exception_type=type(e).__name__
+                )
 
-            test_case.improved_source = base64.b64encode(improved_source).decode("utf-8")
+            test_case.improved_source = base64.b64encode(improved_source).decode(
+                "utf-8"
+            )
 
             method_result.test_cases.append(test_case)
-            
+
         self.fuzz_results.method_results.append(method_result)
 
     def summarize_exceptions(self) -> None:

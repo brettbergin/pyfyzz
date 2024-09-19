@@ -87,7 +87,8 @@ router.get('/', async (req, res) => {
 
       // Third query to fetch fuzz results information
       let query3 = `
-        SELECT 
+        SELECT
+          fr.record_id,
           b.batch_job_id, 
           b.package_name,
           pr.name,
@@ -107,7 +108,8 @@ router.get('/', async (req, res) => {
         ON b.batch_job_id = fr.batch_job_id
         AND b.package_name = fr.package_name
         WHERE fr.is_python_exception = 1
-        GROUP BY 
+        GROUP BY
+          fr.record_id,
           b.batch_job_id, 
           b.package_name,
           pr.name,
@@ -124,7 +126,6 @@ router.get('/', async (req, res) => {
 
       const queryParams3 = [];
 
-      // Run all three queries concurrently using Promise.all
       const [results1, results2, results3] = await Promise.all([
           db.query(query1, queryParams1),
           db.query(query2, queryParams2),
@@ -182,16 +183,15 @@ router.get('/', async (req, res) => {
         }
       });
       
-      // Pass all three results to the EJS template
       res.render('pages/home', {
           title: 'PyFyzz Home',
-          results1: results1[0], // Results from the first query
-          results2: results2[0], // Results from the second query
-          results3: results3[0], // Results from the third query
+          results1: results1[0],
+          results2: results2[0],
+          results3: results3[0],
           sort: sanitizedSort,
           order: sanitizedOrder,
-          package_name: package_name || '', // Pass the current search term back to the template
-          batch_job_id: batch_job_id || '' // Pass the batch_job_id if provided
+          package_name: package_name || '',
+          batch_job_id: batch_job_id || ''
       });
 
     } catch (error) {

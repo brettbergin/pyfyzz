@@ -1,0 +1,29 @@
+<%- include('../layouts/main') %>
+
+<div class="container-fluid mt-5">
+  <div class="card">
+    <div class="card-header bg-primary text-white">
+      <h1 class="h3">Pull Request Results</h1>
+    </div>
+    <div class="card-body">
+      <!-- CLI Message Alert -->
+      <% if (messageType) { %>
+        <div class="alert alert-<%= messageType || 'info' %> alert-dismissible fade show" role="alert">
+          <pre>Command Executed: <strong><%= pyfyzz_cmd %></strong></pre>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      <% } %>
+
+      <!-- Result Information -->
+      <h4 class="mt-4">Command Output</h4>
+      <% if (messageContent) { %>
+        <pre><code><%= messageContent %></code></pre>
+      <% } else { %>
+        <pre><code><%= 'No command output available.' %></code></pre>
+      <% } %>
+
+      <!-- Button to go back -->
+      <button class="btn btn-sm btn-secondary mt-3" onclick="goBack()">Go Back</button>
+    </div>
+  </div>
+</div>

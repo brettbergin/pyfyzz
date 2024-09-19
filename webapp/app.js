@@ -2,7 +2,6 @@
 
 const express = require('express');
 const path = require('path');
-// const escapeHtml = require('escape-html');
 require('dotenv').config();
 
 const app = express();
@@ -27,6 +26,9 @@ app.use('/batches/summaries', BatchSummariesRoute);
 const PackagesRoute = require('./routes/packages');
 app.use('/packages', PackagesRoute);
 
+const PullRequestsRoute = require('./routes/pull_requests');
+app.use('/pull_requests', PullRequestsRoute);
+
 // About route
 app.get('/about', (req, res) => {
   res.render('pages/about', { title: 'About Us' });
@@ -39,11 +41,11 @@ app.use((req, res, next) => {
 
 // 500 - Server Error handler
 app.use((err, req, res, next) => {
-    console.error(err.stack); // Log the error
-    res.status(500).render('pages/500', { title: 'Server Error' }); // Correct path to the 500 view
+    console.error(err.stack);
+    res.status(500).render('pages/500', { title: 'Server Error' });
   });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`); // Changed log for maturity
+  console.log(`Server running on port ${PORT}`);
 });

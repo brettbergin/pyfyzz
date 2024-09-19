@@ -4,6 +4,7 @@ import os
 import sys
 import uuid
 import json
+import base64
 
 from typing import Tuple, Dict
 import datetime
@@ -15,11 +16,12 @@ from .fuzzer import Fuzzer
 from .logger import PyFyzzLogger
 from .arguments import Arguments
 from .analyzer import PythonPackageAnalyzer
-# from .exports import FileExporter
 from .databases import DatabaseExporter
 from .validators import PyFyzzInputValidator
 from .models.data_models import PackageInfo, DBOptions
+from .models.orm_models import FuzzResults, PackageRecords
 from .serializers import PackageInfoSerializer, FuzzResultSerializer
+from .git import GithubForPyFyzz
 
 
 def fuzz_package(
@@ -32,7 +34,10 @@ def fuzz_package(
     returns: Fuzzer or sys.exit(-1)
     """
 
-    fuzzer = Fuzzer(logger=logger, package_under_test=package_info, openai_api_key=openai_api_key)
+    fuzzer = Fuzzer(
+        logger=logger, package_under_test=package_info, openai_api_key=openai_api_key
+    )
+
     ran = fuzzer.run()
     if not ran:
         logger.log(
@@ -46,11 +51,12 @@ def fuzz_package(
     results_as_df = FuzzResultSerializer(
         fuzz_results=fuzzer.fuzz_results
     ).as_dataframe()
+
     return (results_as_dict, results_as_df, fuzzer.exception_count)
 
 
 def analyze_package(
-    logger: PyFyzzLogger, pkg_name: str, igr_priv: bool
+    logger: PyFyzzLogger, pkg_name: str
 ) -> Tuple[PackageInfo, Dict, pd.DataFrame]:
     """
     Enumerates all of the package contents in the given package and returns
@@ -71,7 +77,7 @@ def analyze_package(
         sys.exit(-1)
     logger.log("debug", f"[!] Package found importable into runtime: {importable}")
 
-    pkg_info = analyzer.run(pkg_name=pkg_name, ignore_private=igr_priv)
+    pkg_info = analyzer.run(pkg_name=pkg_name)
     if not pkg_info:
         logger.log(
             "error",
@@ -82,6 +88,7 @@ def analyze_package(
 
     pkg_dict = PackageInfoSerializer(package_info=pkg_info).as_dict()
     pkg_df = PackageInfoSerializer(package_info=pkg_info).as_dataframe()
+
     return pkg_info, pkg_dict, pkg_df
 
 
@@ -107,20 +114,7 @@ def valid_user_input(logger: PyFyzzLogger) -> Tuple[str, bool, str]:
         sys.exit(-1)
     logger.log("info", f"[+] Beginning package analysis for package: {package_name}")
 
-    ignore_private: bool = validator.validate_ignore_private(args.ignore_private)
-    if not ignore_private:
-        logger.log(
-            "error", "[-] Ignore private argument is incorrect or malformed. Quitting."
-        )
-        sys.exit(-1)
-    logger.log("info", f"[+] Ignoring private methods: {ignore_private}")
-
-    output_format: str = validator.validate_output_format(args.output_format)
-    if not output_format:
-        logger.log("error", "[-] Invalid output format has been provided. Quitting.")
-        sys.exit(-1)
-    logger.log("info", f"[+] Running with file output format: {output_format}")
-    return (package_name, ignore_private, output_format)
+    return args
 
 
 def publish_to_database(
@@ -131,28 +125,9 @@ def publish_to_database(
     fr_df: pd.DataFrame,
     batch_job_id: str,
     discovered_methods: int,
+    conn_string: str,
 ) -> None:
     """ """
-    db_user = os.environ.get("PYFYZZ_DB_USERNAME")
-    if not db_user:
-        logger.log(
-            "error", "[-] Unable to obtain pyfyzz db username from env vars. quitting."
-        )
-        sys.exit(-1)
-
-    db_passwd = os.environ.get("PYFYZZ_DB_PASSWORD")
-    if not db_passwd:
-        logger.log(
-            "error", "[-] Unable to obtain pyfyzz db password from env vars. quitting."
-        )
-        sys.exit(-1)
-
-    db = DBOptions(
-        user=db_user, password=db_passwd, host="localhost", port=3306, name="pyfyzz"
-    )
-    conn_string = (
-        f"mysql+mysqlconnector://{db.user}:{db.password}@{db.host}:{db.port}/{db.name}"
-    )
 
     db_exporter = DatabaseExporter(
         db_uri=conn_string,
@@ -191,32 +166,13 @@ def publish_to_database(
     return db_exporter
 
 
-def main() -> None:
-    """
-    Main entry point for the script. Parses arguments, verifies the package,
-    and performs the analysis and export.
-    """
+def scan_package(
+    logger, package_name, batch_job_id, openai_api_key, conn_string
+) -> datetime.datetime:
+    """ """
     start_time = datetime.datetime.now()
 
-    logger = PyFyzzLogger(name="pyfyzz", level="info")
-    logger.log("info", f"[+] Starting pyfyzz @: {start_time}.")
-
-    # file_exporter = FileExporter(logger=logger)
-
-    batch_job_id = str(uuid.uuid4())
-
-    openai_api_key = os.environ.get("OPENAI_API_KEY")
-    if not openai_api_key:
-        logger.log(
-            "error", "[-] Unable to obtain openai API key from env vars. quitting."
-        )
-        sys.exit(-1)
-
-    package_name, ignore_private, output_format = valid_user_input(logger)
-
-    pkg_info, pkg_dict, pkg_df = analyze_package(
-        logger, pkg_name=package_name, igr_priv=ignore_private
-    )
+    pkg_info, pkg_dict, pkg_df = analyze_package(logger, pkg_name=package_name)
 
     fuzz_results_dict, fuzz_results_df, fuzz_counts = fuzz_package(
         logger, package_info=pkg_info, openai_api_key=openai_api_key
@@ -234,25 +190,169 @@ def main() -> None:
         pkg_df=pkg_df,
         fr_df=fuzz_results_df,
         discovered_methods=fuzzed_method_count,
+        conn_string=conn_string,
     )
 
     db_exporter.insert_batch_summary(
         counts=fuzz_counts, batch_job_id=batch_job_id, pkg_name=package_name
     )
 
-    # if output_format == "json":
-    #     file_exporter.export_to_json(pkg_dict, f"topology_{package_name}.json")
-    #     file_exporter.export_to_json(fuzz_results_dict, f"results_{package_name}.json")
-
-    # elif output_format == "yaml":
-    #     file_exporter.export_to_yaml(pkg_dict, f"topology_{package_name}.yaml")
-    #     file_exporter.export_to_yaml(fuzz_results_dict, f"results_{package_name}.yaml")
-
     stop_time = datetime.datetime.now()
     db_exporter.update_job_complete(
         batch_job_id=batch_job_id, stop_time=stop_time, batch_status="completed"
     )
+    return
 
+
+def github_pull_request(
+    logger, access_token, conn_string, package_name, pyfyzz_record_id
+):
+    """ """
+    fyzzgit = GithubForPyFyzz(logger, access_token=access_token)
+    db = DatabaseExporter(db_uri=conn_string, logger=logger)
+    fyzzgit.db = db
+
+    exception_to_report = (
+        db.session.query(FuzzResults)
+        .filter(
+            FuzzResults.record_id == pyfyzz_record_id,
+            FuzzResults.package_name == package_name,
+        )
+        .first()
+    )
+
+    urls = []
+    if exception_to_report:
+        package_info = (
+            db.session.query(PackageRecords)
+            .filter(PackageRecords.batch_job_id == exception_to_report.batch_job_id)
+            .first()
+        )
+
+        if package_info:
+            urls.append(package_info.home_page)
+            urls.append(package_info.project_url)
+
+            data = json.loads(package_info.project_urls)
+            if data:
+                for _, v in data.items():
+                    urls.append(v)
+
+        else:
+            logger.log("error", "[-] Package information not found.")
+            return
+    else:
+        logger.log("error", "[-] Fuzz result not found.")
+        return
+
+    urls = [url for url in list(set(urls)) if url is not None]
+    urls = [
+        url
+        for url in urls
+        if url.startswith("https://github.com") and url.endswith(package_name)
+    ]
+
+    github_url = urls[0] if len(urls) > 0 else None
+    clone_path = os.path.join(os.path.expanduser("~"), ".pyfyzz", f"{package_name}")
+
+    if github_url:
+        if not os.path.exists(os.path.join(os.path.expanduser("~"), ".pyfyzz")):
+            os.makedirs(os.path.join(os.path.expanduser("~"), ".pyfyzz"))
+
+        fyzzgit.init_repo_from_url(repo_url=github_url)
+        fyzzgit.create_repo_clone(
+            repo_url=github_url,
+            repo_name=package_name,
+            clone_path=clone_path,
+            new_branch_name="improvements",
+        )
+
+        fyzzgit.make_improvements(
+            folder_path=clone_path,
+            package_name=package_name,
+            method_name=exception_to_report.method_name,
+            new_method_code=base64.b64decode(
+                exception_to_report.improved_source.encode("utf-8")
+            ).decode("utf-8"),
+        )
+
+    else:
+        logger.log(
+            "error",
+            f"[-] No GitHub URL enumerated for package: {exception_to_report.package_name}. URLs: {package_info.project_urls}",
+        )
+
+
+def main() -> None:
+    """
+    Main entry point for the script. Parses arguments, verifies the package,
+    and performs the analysis and export.
+    """
+    start_time = datetime.datetime.now()
+
+    logger = PyFyzzLogger(name="pyfyzz", level="debug")
+    logger.log("info", f"[+] Starting pyfyzz @: {start_time}.")
+
+    openai_api_key = os.environ.get("OPENAI_API_KEY")
+    if not openai_api_key:
+        logger.log(
+            "error", "[-] Unable to obtain openai API key from env vars. quitting."
+        )
+        sys.exit(-1)
+
+    github_access_token = os.environ.get("GITHUB_ACCESS_TOKEN")
+    if not github_access_token:
+        logger.log(
+            "error", "[-] Unable to obtain GitHub access token from env vars. quitting."
+        )
+        sys.exit(-1)
+
+    db_user = os.environ.get("PYFYZZ_DB_USERNAME")
+    if not db_user:
+        logger.log(
+            "error", "[-] Unable to obtain pyfyzz db username from env vars. quitting."
+        )
+        sys.exit(-1)
+
+    db_passwd = os.environ.get("PYFYZZ_DB_PASSWORD")
+    if not db_passwd:
+        logger.log(
+            "error", "[-] Unable to obtain pyfyzz db password from env vars. quitting."
+        )
+        sys.exit(-1)
+
+    db = DBOptions(
+        user=db_user, password=db_passwd, host="localhost", port=3306, name="pyfyzz"
+    )
+
+    conn_string = (
+        f"mysql+mysqlconnector://{db.user}:{db.password}@{db.host}:{db.port}/{db.name}"
+    )
+
+    batch_job_id = str(uuid.uuid4())
+    args = valid_user_input(logger)
+
+    if args.command == "scan":
+        scan_package(
+            logger,
+            args.package_name,
+            batch_job_id,
+            openai_api_key=openai_api_key,
+            conn_string=conn_string,
+        )
+
+    elif args.command == "github_pull_request":
+        github_pull_request(
+            logger,
+            access_token=github_access_token,
+            conn_string=conn_string,
+            package_name=args.package_name,
+            pyfyzz_record_id=args.record_id,
+        )
+    
+    else:
+        print("No valid command provided. Use 'scan' or 'github_pull_request'.")
+
+    stop_time = datetime.datetime.now()
     logger.log("info", f"[+] Pyfyzz finished @: {stop_time}.")
-
     sys.exit(0)

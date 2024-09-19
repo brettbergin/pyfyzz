@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 
 const express = require('express');
-const { marked } = require('marked');
 // const escapeHtml = require('escape-html');
-require('dotenv').config();
 
 const router = express.Router();
 const db = require('../db'); 
@@ -22,7 +20,7 @@ router.get('/', async (req, res) => {
       }
 
       // Add sorting to the query
-      query += ` ORDER BY ${sort} ${order.toUpperCase()}`;  // Prevent SQL injection
+      query += ` ORDER BY ${sort} ${order.toUpperCase()}`;
 
       // Execute the query
       const [summaries] = await db.query(query, queryParams);
@@ -30,8 +28,8 @@ router.get('/', async (req, res) => {
       res.render('pages/batch_summaries', {
         title: `Batch Summaries for Job ID ${batch_job_id || 'All'}`,
         summaries,
-        sort,   // Pass current sort field
-        order   // Pass current order
+        sort,
+        order
       });
     } catch (error) {
       console.error(error);
@@ -40,7 +38,7 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-    const { package_name } = req.body;  // Get package_name from form submission
+    const { package_name } = req.body;
     const { batch_job_id, sort = 'exception_occurences', order = 'DESC' } = req.query; // Default sorting
 
     try {
@@ -57,7 +55,7 @@ router.post('/', async (req, res) => {
         if (package_name) {
             query += batch_job_id ? ' AND' : ' WHERE';
             query += ' package_name LIKE ?';
-            queryParams.push(`%${package_name}%`);  // Use LIKE for partial match
+            queryParams.push(`%${package_name}%`);
         }
 
         const [summaries] = await db.query(query, queryParams);

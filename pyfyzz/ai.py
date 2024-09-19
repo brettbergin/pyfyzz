@@ -22,13 +22,15 @@ class ChatGPTInterface:
     def suggest_improvement(self, source_code: str, code_path: str) -> str:
         """
         Submits the exception details and source code to ChatGPT to ask for code improvements.
-        
+
         :param fuzz_case: A FuzzCase object containing details about the fuzzing test.
         :return: A suggested code improvement from ChatGPT.
-        """    
-        self.logger.log("info", f"[+] Making improvement request to chatgpt for: {code_path}")
-        
-        decoded_source = base64.b64decode(source_code).decode('utf-8')
+        """
+        self.logger.log(
+            "info", f"[+] Making improvement request to chatgpt for: {code_path}"
+        )
+
+        decoded_source = base64.b64decode(source_code).decode("utf-8")
 
         prompt = f"""
         The following Python code will now be known as the "original_code". 
@@ -55,13 +57,10 @@ class ChatGPTInterface:
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an assistant that improves Python code based on provided exception details. Only respond with code, without any explanation."
+                    "content": "You are an assistant that improves Python code based on provided exception details. Only respond with code, without any explanation.",
                 },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
+                {"role": "user", "content": prompt},
+            ],
         )
         improved_code = response.choices[0].message.content
         self.logger.log("debug", f"[!] Improved Code: {improved_code}")

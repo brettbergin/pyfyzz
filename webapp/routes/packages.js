@@ -3,7 +3,6 @@
 const express = require('express');
 const { marked } = require('marked');
 // const escapeHtml = require('escape-html');
-require('dotenv').config();
 
 const router = express.Router();
 const db = require('../db'); 
@@ -36,7 +35,6 @@ router.get('/', async (req, res) => {
             pkg.description = marked(pkg.description);
           } catch (e) {
             console.error('Error parsing markdown:', e);
-            // Leave description as it is in case of an error
           }
         }
       });
@@ -44,8 +42,8 @@ router.get('/', async (req, res) => {
       res.render('pages/packages', {
         title: `Package Info`,
         packages,
-        sort,    // Pass current sort field
-        order    // Pass current order
+        sort,
+        order
       });
     } catch (error) {
       console.error(error);

@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
 
       // Scan the package if provided
       if (package_to_scan) {        
-        const pyfyzz = spawn('pyfyzz', ['-p', package_to_scan, '-o', 'json', '-i']);
+        const pyfyzz = spawn('pyfyzz', ['scan', '-p', package_to_scan]);
 
         pyfyzz.stdout.on('data', (data) => {
           console.log(`Output:\n${data}`);
@@ -41,8 +41,8 @@ router.get('/', async (req, res) => {
           res.render('pages/batches', {
             title: `Batch for Job(s): ${batch_job_id || 'All'}`,
             batches,
-            sort,    // Pass current sort field
-            order,   // Pass current order
+            sort,
+            order,
             error: null
           });
         });
@@ -51,8 +51,8 @@ router.get('/', async (req, res) => {
         res.render('pages/batches', {
           title: `Batch for Job(s): ${batch_job_id || 'All'}`,
           batches,
-          sort,    // Pass current sort field
-          order,   // Pass current order
+          sort,
+          order,
           error: null
         });
       }
@@ -81,7 +81,7 @@ router.post('/', async (req, res) => {
       const [batches] = await db.query(query, queryParams);
 
       if (cleaned_package) {        
-        const pyfyzz = spawn('pyfyzz', ['-p', cleaned_package, '-o', 'json', '-i']);
+        const pyfyzz = spawn('pyfyzz', ['scan', '-p', cleaned_package]);
 
         pyfyzz.stdout.on('data', (data) => {
           console.log(`Output:\n${data}`);
