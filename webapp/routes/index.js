@@ -8,7 +8,7 @@ const db = require('../db');
 
 
 router.get('/', async (req, res) => {
-    const { batch_job_id, package_name, sort = 'package_name', order = 'DESC' } = req.query;
+    const { batch_job_id = '', package_name = '', sort = 'package_name', order = 'DESC' } = req.query;
     const allowedSortFields = ['package_name', 'start_time', 'stop_time', 'discovered_methods'];
     const sanitizedSort = allowedSortFields.includes(sort) ? sort : 'package_name';
     const sanitizedOrder = ['ASC', 'DESC'].includes(order?.toUpperCase()) ? order.toUpperCase() : 'DESC';
@@ -197,13 +197,11 @@ router.get('/', async (req, res) => {
       const chartData3 = results3[0].reduce((acc, result) => {
         const packageName = result.package_name;
         const packageRecord = acc.find(item => item.packageName === packageName);
-        
         if (packageRecord) {
             packageRecord.fuzzRecordCount += 1;
         } else {
             acc.push({ packageName, fuzzRecordCount: 1 });
         }
-        
         return acc;
       }, []);
 
@@ -218,12 +216,28 @@ router.get('/', async (req, res) => {
           sort: sanitizedSort,
           order: sanitizedOrder,
           package_name: package_name || '',
-          batch_job_id: batch_job_id || ''
+          batch_job_id: batch_job_id || '',
+          error: null
       });
 
     } catch (error) {
-        console.error('Error executing queries:', error);
-        res.status(500).render('pages/500', { title: 'Server Error', error: 'Something went wrong!' });
+      console.error('Error executing query:', error);
+  
+      // Render the page with empty results and pass error message
+      res.render('pages/home', {
+        title: 'PyFyzz Home',
+        results1: [],
+        results2: [],
+        results3: [],
+        chartData1: [],
+        chartData2: [],
+        chartData3: [],
+        sort: sanitizedSort,
+        order: sanitizedOrder,
+        package_name: package_name || '',
+        batch_job_id: batch_job_id || '',
+        error: 'Unable to retrieve data. Please check database connection and schema.'
+      });
     }
 });
 

@@ -3,7 +3,7 @@
 <div class="container-fluid mt-5">
   <div class="card">
     <div class="card-header bg-primary text-white">
-      <h1 class="h3">PyPI Package Statistics</h1>
+      <h1 class="h3">Statistics</h1>
     </div>
     <div class="card-body">
       <div class="row">
@@ -24,26 +24,37 @@
 <div class="container-fluid mt-5">
   <div class="card">
     <div class="card-header bg-primary text-white">
-      <h1 class="h3">PyPI Package Analysis</h1>
+      <h1 class="h3">Analysis</h1>
     </div>
     <div class="card-body">
-
       <!-- Search form for package name -->
       <form action="" method="GET" class="mb-4">
-        <div class="form-group">
-          <label for="package_name">Search by Package Name</label>
-          <input 
-            type="text" 
-            class="form-control" 
-            id="package_name" 
-            name="package_name" 
-            value="<%= package_name || '' %>" 
-            placeholder="Enter a package name">
-        </div><br>
-        <button type="submit" class="btn btn-primary">Search</button>
-        <a href="/" class="btn btn-secondary">Clear</a>
+        <div class="row">
+          <div class="col-md-2">
+            <div class="form-group">
+              <label for="package_name">Search by Package Name</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="package_name" 
+                name="package_name" 
+                value="" 
+                placeholder="Enter a package name">
+            </div>
+          </div>
+          <div class="col-md-4 d-flex align-items-end"> <!-- Align buttons at the end -->
+            <button type="submit" class="btn btn-primary me-2">Search</button>
+            <a href="/" class="btn btn-secondary">Clear</a>
+          </div>
+        </div>
       </form>
 
+      <% if (error) { %>
+        <div class="alert alert-danger">
+          <%= error %> <!-- Display the error message if there is any -->
+        </div>
+      <% } %>
+      
       <% if (results1.length > 0) { %>
 
       <div class="accordion" id="packageAccordion"> <!-- Bootstrap accordion container -->
@@ -125,7 +136,6 @@
                   <div class="col-md-4">
                     <table class="table table-responsive">
                       <tbody>
-
                         <tr>
                           <th>Job Status</th>
                           <td>
@@ -134,7 +144,7 @@
                             </span>
                           </td>
                         </tr>
-                        <tr></tr>
+                        <tr>
                           <th>Job ID</th>
                           <td>
                             <a class="btn btn-sm btn-secondary" 
@@ -146,7 +156,7 @@
                             <i class="bi bi-link"></i>
                           </td>
                         </tr>
-                        <tr></tr>
+                        <tr>
                           <th>Job Summary</th>
                           <td>
                             <a class="btn btn-sm btn-secondary" 
@@ -425,13 +435,10 @@
                     </div>
                   </div>
                 <% } %>
-
-
               </div>
             </div>
           </div>
         <% }) %>
-
       </div> <!-- End accordion -->
       <% } else { %>
         <div class="alert alert-warning">
@@ -439,11 +446,9 @@
         </div>
       <% } %>
     </div>
-
     <div class="card-footer text-muted">
       <p>Displaying <strong><%= results1.length %></strong> packages</p>
     </div>
-
   </div>
 </div>
 
@@ -515,4 +520,11 @@
     ]
   };
   chart3.setOption(option3);
+
+  // Handle window resize for responsive charts
+  window.addEventListener('resize', function() {
+    chart1.resize();  // Resize chart1 on window resize
+    chart2.resize();  // Resize chart2 on window resize
+    chart3.resize();  // Resize chart3 on window resize
+  });
 </script>

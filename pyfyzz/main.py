@@ -239,17 +239,17 @@ def github_pull_request(
                     urls.append(v)
 
         else:
-            logger.log("error", "[-] Package information not found.")
+            logger.log("error", "[-] PyPI Package information not found in database. No Github URL to use for pull request.")
             return
     else:
-        logger.log("error", "[-] Fuzz result not found.")
+        logger.log("error", "[-] Requested fuzz result not found. Nothing to create a pull request from.")
         return
 
     urls = [url for url in list(set(urls)) if url is not None]
     urls = [
         url
         for url in urls
-        if url.startswith("https://github.com") and url.endswith(package_name)
+        if url.lower().startswith("https://github.com") and url.lower().endswith(package_name.lower())
     ]
 
     github_url = urls[0] if len(urls) > 0 else None

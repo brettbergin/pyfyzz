@@ -6,13 +6,13 @@
     <div class="card-header bg-primary text-white">
       <h1 class="h3">Scanned PyPI Packages</h1>
     </div>
-    
+
     <div class="card-body">
       <% if (packages.length > 0) { %>
-      <div class="table-responsive mt-5">
+      <div class="table-responsive mt-3"> <!-- Reduced mt-5 to mt-3 for less top margin -->
         <p>Displaying <strong><%= packages.length %></strong> package(s)</p>
         <table class="table table-striped table-bordered table-hover">
-          <thead class="thead-dark">
+          <thead class="table-bordered">
             <tr>
               <th>
                 <a href="?sort=batch_job_id&order=<%= sort === 'batch_job_id' && order === 'ASC' ? 'DESC' : 'ASC' %>">
@@ -97,20 +97,17 @@
                       <p><strong>License:</strong> ${package.license || 'Unknown'}</p>
                       <ul>
                     `;
-                    let foo;
+
+                    let projectUrls = [];
                     try {
                       // Parse the string back to an object
-                      const projectUrls = JSON.parse(package.project_urls);
-
-                      // Use Object.entries to convert the object into an array of key-value pairs
-                      foo = Object.entries(projectUrls);
+                      projectUrls = JSON.parse(package.project_urls);
                     } catch (error) {
                       console.error('Error parsing project_urls:', error);
-                      foo = []; // Fallback to an empty array if parsing fails
                     }
                     
-                    // Loop through the inputs object and build list items
-                    for (const [key, value] of foo) {
+                    // Loop through the projectUrls object and build list items
+                    for (const [key, value] of Object.entries(projectUrls || {})) {
                       modalContent += `
                         <li><strong>${key}:</strong> 
                           ${value === "" ? '""' : 
@@ -133,7 +130,6 @@
               </tr>
             <% }) %>
           </tbody>
-          
         </table>
       </div>
       <% } else { %>
@@ -142,8 +138,9 @@
       </div>
       <% } %>
     </div>
+
     <div class="card-footer text-muted">
-        <p>Displaying <strong><%= packages.length %></strong> known PyPI packages</p>
+      <p>Displaying <strong><%= packages.length %></strong> known PyPI packages</p>
     </div>
   </div>
 </div>
