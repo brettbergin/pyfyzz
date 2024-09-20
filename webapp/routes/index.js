@@ -182,12 +182,50 @@ router.get('/', async (req, res) => {
             result.DecodedTraceback = 'No Traceback Available';
         }
       });
-      
+
+      // Chart data for results1
+      const chartData1 = results1[0].map(result => ({
+        packageName: result.package_name,
+        discoveredMethods: result.discovered_methods,
+        startTime: new Date(result.start_time).toLocaleDateString(),
+        stopTime: new Date(result.stop_time).toLocaleDateString(),
+      }));
+
+      const chartData2 = results2[0]
+        .filter(result => result.package_name !== 'Unknown')  // Filter out "Unknown" package names
+        .map(result => ({
+            packageName: result.package_name,
+            modulesCount: result.ModulesCount,
+            classesCount: result.ClassesCount,
+            methodsCount: result.MethodsCount
+      }));
+
+      // Chart data for results3 (Count of fuzz records per package)
+      const chartData3 = results3[0].reduce((acc, result) => {
+        const packageName = result.package_name;
+        
+        // Check if the package is already in the accumulator
+        const packageRecord = acc.find(item => item.packageName === packageName);
+        
+        if (packageRecord) {
+            // Increment the count if the package already exists
+            packageRecord.fuzzRecordCount += 1;
+        } else {
+            // Add a new package with an initial fuzz record count of 1
+            acc.push({ packageName, fuzzRecordCount: 1 });
+        }
+        
+        return acc;
+      }, []);
+
       res.render('pages/home', {
           title: 'PyFyzz Home',
           results1: results1[0],
           results2: results2[0],
           results3: results3[0],
+          chartData1,
+          chartData2,
+          chartData3,
           sort: sanitizedSort,
           order: sanitizedOrder,
           package_name: package_name || '',

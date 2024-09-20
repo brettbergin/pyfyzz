@@ -3,7 +3,28 @@
 <div class="container-fluid mt-5">
   <div class="card">
     <div class="card-header bg-primary text-white">
-      <h1 class="h3">Package Analysis</h1>
+      <h1 class="h3">PyPI Package Statistics</h1>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <div id="chartContainer1" style="height: 300px;"></div>
+        </div>
+        <div class="col-md-4">
+          <div id="chartContainer2" style="height: 300px;"></div>
+        </div>
+        <div class="col-md-4">
+          <div id="chartContainer3" style="height: 300px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt-5">
+  <div class="card">
+    <div class="card-header bg-primary text-white">
+      <h1 class="h3">PyPI Package Analysis</h1>
     </div>
     <div class="card-body">
 
@@ -423,3 +444,73 @@
 
   </div>
 </div>
+
+<script>
+  var chartData1 = <%- JSON.stringify(chartData1) %>;
+
+  var chart1 = echarts.init(document.getElementById('chartContainer1'));
+  var option1 = {
+    title: { text: 'Discovered Methods' },
+    tooltip: {},
+    xAxis: {
+      type: 'category',
+      data: chartData1.map(item => item.packageName),
+      axisLabel: {
+        rotate: 45,  // Rotate labels by 45 degrees for better visibility
+        interval: 0  // Show every label
+      }
+    },
+    yAxis: { type: 'value', name: 'Discovered Methods' },
+    series: [{
+      name: 'Discovered Methods',
+      type: 'bar',
+      data: chartData1.map(item => item.discoveredMethods)
+    }]
+  };
+  chart1.setOption(option1);
+
+  var chartData2 = <%- JSON.stringify(chartData2) %>;
+
+  var chart2 = echarts.init(document.getElementById('chartContainer2'));
+  var option2 = {
+    title: { text: 'Package Composition' },
+    tooltip: {},
+    legend: { data: ['Modules', 'Classes', 'Methods'] },
+    xAxis: {
+      type: 'category',
+      data: chartData2.map(item => item.packageName),
+      axisLabel: {
+        rotate: 45,  // Rotate labels for better visibility
+        interval: 0  // Show every label
+      }
+    },
+    yAxis: { type: 'value' },
+    series: [
+      { name: 'Modules', type: 'bar', data: chartData2.map(item => item.modulesCount) },
+      { name: 'Classes', type: 'bar', data: chartData2.map(item => item.classesCount) },
+      { name: 'Methods', type: 'bar', data: chartData2.map(item => item.methodsCount) }
+    ]
+  };
+  chart2.setOption(option2);
+
+  var chartData3 = <%- JSON.stringify(chartData3) %>;
+
+  var chart3 = echarts.init(document.getElementById('chartContainer3'));
+  var option3 = {
+    title: { text: 'Scan Findings' },
+    tooltip: {},
+    xAxis: {
+      type: 'category',
+      data: chartData3.map(item => item.packageName),
+      axisLabel: {
+        rotate: 45,  // Rotate labels for better visibility
+        interval: 0  // Show every label
+      }
+    },
+    yAxis: { type: 'value', name: 'Fuzz Record Count' },
+    series: [
+      { name: 'Fuzz Records', type: 'bar', data: chartData3.map(item => item.fuzzRecordCount) }
+    ]
+  };
+  chart3.setOption(option3);
+</script>

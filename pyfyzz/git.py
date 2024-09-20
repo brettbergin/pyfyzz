@@ -456,7 +456,7 @@ class GithubForPyFyzz(PyFyzzCodePatcher):
 
         self.logger.log(
             "info",
-            f"[+] Making improvements to {method_name} in package {package_name}",
+            f"[+] Applying code enhancements to '{method_name}' within package '{package_name}'.",
         )
 
         fuzz_result = self._fetch_db_resources(package_name, method_name)
