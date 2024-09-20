@@ -155,44 +155,37 @@ router.get('/', async (req, res) => {
         } else {
             result.DecodedSource = 'No Source Available';
         }
-      });
-
-      results3[0].forEach(result => {
         if (result.ImprovedEncodedSource) {
-            try {
-                const decoded = Buffer.from(result.ImprovedEncodedSource, 'base64').toString('utf-8');
-                result.DecodedImprovedSource = escapeHtml(decoded);
-            } catch (e) {
-                result.DecodedImprovedSource = 'Improved Source Unknown';
-            }
+          try {
+              const decoded = Buffer.from(result.ImprovedEncodedSource, 'base64').toString('utf-8');
+              result.DecodedImprovedSource = escapeHtml(decoded);
+          } catch (e) {
+              result.DecodedImprovedSource = 'Improved Source Unknown';
+          }
         } else {
-            result.DecodedImprovedSource = 'No Improved Source Available';
+          result.DecodedImprovedSource = 'No Improved Source Available';
         }
-      });
-
-      results3[0].forEach(result => {
         if (result.EncodedTraceback) {
-            try {
-                const decoded = Buffer.from(result.EncodedTraceback, 'base64').toString('utf-8');
-                result.DecodedTraceback = escapeHtml(decoded);
-            } catch (e) {
-                result.DecodedTraceback = 'Full Traceback Unknown';
-            }
+          try {
+              const decoded = Buffer.from(result.EncodedTraceback, 'base64').toString('utf-8');
+              result.DecodedTraceback = escapeHtml(decoded);
+          } catch (e) {
+              result.DecodedTraceback = 'Full Traceback Unknown';
+          }
         } else {
-            result.DecodedTraceback = 'No Traceback Available';
+          result.DecodedTraceback = 'No Traceback Available';
         }
       });
 
       // Chart data for results1
       const chartData1 = results1[0].map(result => ({
         packageName: result.package_name,
-        discoveredMethods: result.discovered_methods,
-        startTime: new Date(result.start_time).toLocaleDateString(),
-        stopTime: new Date(result.stop_time).toLocaleDateString(),
+        discoveredMethods: result.discovered_methods
       }));
 
+      // Chart data for results2
       const chartData2 = results2[0]
-        .filter(result => result.package_name !== 'Unknown')  // Filter out "Unknown" package names
+        .filter(result => result.package_name !== 'Unknown')
         .map(result => ({
             packageName: result.package_name,
             modulesCount: result.ModulesCount,
@@ -203,15 +196,11 @@ router.get('/', async (req, res) => {
       // Chart data for results3 (Count of fuzz records per package)
       const chartData3 = results3[0].reduce((acc, result) => {
         const packageName = result.package_name;
-        
-        // Check if the package is already in the accumulator
         const packageRecord = acc.find(item => item.packageName === packageName);
         
         if (packageRecord) {
-            // Increment the count if the package already exists
             packageRecord.fuzzRecordCount += 1;
         } else {
-            // Add a new package with an initial fuzz record count of 1
             acc.push({ packageName, fuzzRecordCount: 1 });
         }
         
