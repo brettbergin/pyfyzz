@@ -56,7 +56,7 @@ class GithubForPyFyzz(PyFyzzCodePatcher):
             self.repo = self.github.get_repo(self.repo_str)
             self.logger.log("info", f"[+] Successfully set repository: {self.repo_str}")
             return True
-        
+
         except Exception as err:
             self.logger.log(
                 "error",
@@ -122,18 +122,18 @@ class GithubForPyFyzz(PyFyzzCodePatcher):
                 title=pr_title,
                 body=pr_body,
                 head=branch_name,
-                base=self.repo.default_branch
+                base=self.repo.default_branch,
             )
 
             self.logger.log(
                 "info", f"[+] New Pull request successfully created: {pr.html_url}"
             )
             return True
-        
+
         except Exception as e:
             self.logger.log("error", f"[-] Error creating new pull request: {str(e)}")
             return False
-        
+
     def _pull_latest_changes(self, clone_path):
         """
         If we can't clone a repo, let's pull the latest code.
@@ -194,7 +194,7 @@ class GithubForPyFyzz(PyFyzzCodePatcher):
                 f"[-] An git related error occurred during `git pull`: {str(e)}",
             )
             return False
-            
+
         except Exception as e:
             self.logger.log("error", f"[-] An Unexpected error occurred: {str(e)}")
             return False
@@ -282,7 +282,7 @@ class GithubForPyFyzz(PyFyzzCodePatcher):
             # Format the code with black to resolve any ast formatting concerns.
             self._format_with_black(dir_path=f)
             return True
-        
+
         except Exception as err:
             self.logger.log(
                 "error", f"[-] Cannot write updated AST content to file. Error: {err}"
@@ -311,7 +311,7 @@ class GithubForPyFyzz(PyFyzzCodePatcher):
 
     def _create_new_merge(self):
         """
-        Attempt to create a pull request with the locally created changes. 
+        Attempt to create a pull request with the locally created changes.
         """
         try:
             self.logger.log(
@@ -344,7 +344,7 @@ class GithubForPyFyzz(PyFyzzCodePatcher):
         self._set_github_repo()
 
         return True
-    
+
     def create_repo_clone(
         self, repo_url: str, repo_name: str, clone_path: str, new_branch_name: str
     ):
@@ -462,9 +462,12 @@ class GithubForPyFyzz(PyFyzzCodePatcher):
         fuzz_result = self._fetch_db_resources(package_name, method_name)
 
         if not fuzz_result:
-            self.logger.log("error", f"[-] No fuzz result record found in database for package/method combo.")
+            self.logger.log(
+                "error",
+                f"[-] No fuzz result record found in database for package/method combo.",
+            )
             return False
-        
+
         file_path, updated_content = self._create_file_content(
             folder=folder_path,
             fuzz_res=fuzz_result,
@@ -474,9 +477,12 @@ class GithubForPyFyzz(PyFyzzCodePatcher):
         )
 
         if not file_path or not updated_content:
-            self.logger.log("error", f"[-] File path {file_path} or file content {updated_content} invalid in some way. ")
+            self.logger.log(
+                "error",
+                f"[-] File path {file_path} or file content {updated_content} invalid in some way. ",
+            )
             return False
-        
+
         self._write_file(f=file_path, c=updated_content)
         self._resolve_file_changes()
         self._create_new_merge()

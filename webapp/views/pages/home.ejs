@@ -1,21 +1,47 @@
 <%- include('../layouts/main') %>
 
 <div class="container-fluid mt-5">
+  <!-- Collapsible Statistics Card -->
   <div class="card">
     <div class="card-header bg-primary text-white">
-      <h1 class="h3">Statistics</h1>
+      <h1 class="h3">
+        <button class="text-white" style="font-size: 1.75rem; border: none; background: none;" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStatistics" aria-expanded="false" aria-controls="collapseStatistics">
+          Statistics
+        </button>
+      </h1>
     </div>
-    <div class="card-body">
-      <div class="row">
-        <div class="col-md-4">
-          <div id="chartContainer1" style="height: 300px;"></div>
-        </div>
-        <div class="col-md-4">
-          <div id="chartContainer2" style="height: 300px;"></div>
-        </div>
-        <div class="col-md-4">
-          <div id="chartContainer3" style="height: 300px;"></div>
-        </div>
+    <div id="collapseStatistics" class="collapse show">
+      <div class="card-body">
+        <!-- Main Accordion -->
+        <div class="accordion" id="mainAccordion">
+
+          <!-- First Row Accordion -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingRow1">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRow1" aria-expanded="false" aria-controls="collapseRow1">
+                Bar Graphs
+              </button>
+            </h2>
+            <div id="collapseRow1" class="accordion-collapse collapse" aria-labelledby="headingRow1">
+              <div class="accordion-body">
+                <div class="row">
+                  <div class="col-md-4">
+                    <div id="chartContainer1" style="height: 300px;"></div>
+                  </div>
+                  <div class="col-md-4">
+                    <div id="chartContainer2" style="height: 300px;"></div>
+                  </div>
+                  <div class="col-md-4">
+                    <div id="chartContainer3" style="height: 300px;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- First Row Accordion  (if needed) -->
+
+        </div> <!-- End of Main Accordion -->
       </div>
     </div>
   </div>
@@ -24,14 +50,21 @@
 <div class="container-fluid mt-5">
   <div class="card">
     <div class="card-header bg-primary text-white">
-      <h1 class="h3">Analysis</h1>
+      <h1 class="h3">
+        <button class="text-white" style="font-size: 1.75rem; border: none; background: none;" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAnalysis" aria-expanded="false" aria-controls="collapseAnalysis">
+          Analysis
+        </button>
+      </h1>
     </div>
-    <div class="card-body">
-      <!-- Search form for package name -->
-      <form action="" method="GET" class="mb-4">
-        <div class="row">
-          <div class="col-md-2">
-            <div class="form-group">
+
+    <!-- Collapsible body -->
+    <div id="collapseAnalysis" class="collapse show">
+      <div class="card-body">
+        <!-- Search form for package name -->
+        <form action="/" method="GET" class="mb-4">
+          <div class="row">
+            <div class="col-md-2">
+              <div class="form-group">
               <label for="package_name">Search by Package Name</label>
               <input 
                 type="text" 
@@ -55,6 +88,8 @@
         </div>
       <% } %>
       
+      <p>Displaying <strong><%= results1.length %></strong> scanned packages</p>
+
       <% if (results1.length > 0) { %>
 
       <div class="accordion" id="packageAccordion"> <!-- Bootstrap accordion container -->
@@ -306,7 +341,7 @@
                         <h4>Python Exceptions</h4>
                         <div class="row">
                           <div class="col-md-12">
-                            <table class="table table-bordered table-striped table-responsive">
+                            <table class="table table-responsive table-striped">
                               <thead>
                                 <tr>
                                   <th style="word-wrap: break-word; word-break: break-all;">Exception Traceback</th>
@@ -447,15 +482,23 @@
       <% } %>
     </div>
     <div class="card-footer text-muted">
-      <p>Displaying <strong><%= results1.length %></strong> packages</p>
+      <p>Displaying <strong><%= results1.length %></strong> scanned packages</p>
     </div>
   </div>
 </div>
+</div>
+</div>
 
 <script>
+
   var chartData1 = <%- JSON.stringify(chartData1) %>;
+  var chartData2 = <%- JSON.stringify(chartData2) %>;
+  var chartData3 = <%- JSON.stringify(chartData3) %>;
 
   var chart1 = echarts.init(document.getElementById('chartContainer1'));
+  var chart2 = echarts.init(document.getElementById('chartContainer2'));
+  var chart3 = echarts.init(document.getElementById('chartContainer3'));
+
   var option1 = {
     title: { text: 'Discovered Methods' },
     tooltip: {},
@@ -463,7 +506,7 @@
       type: 'category',
       data: chartData1.map(item => item.packageName),
       axisLabel: {
-        rotate: 45,  // Rotate labels by 45 degrees for better visibility
+        rotate: 45,
         interval: 0  // Show every label
       }
     },
@@ -476,18 +519,15 @@
   };
   chart1.setOption(option1);
 
-  var chartData2 = <%- JSON.stringify(chartData2) %>;
-
-  var chart2 = echarts.init(document.getElementById('chartContainer2'));
   var option2 = {
-    title: { text: 'Package Composition' },
+    title: { text: 'Compositions' },
     tooltip: {},
     legend: { data: ['Modules', 'Classes', 'Methods'] },
     xAxis: {
       type: 'category',
       data: chartData2.map(item => item.packageName),
       axisLabel: {
-        rotate: 45,  // Rotate labels for better visibility
+        rotate: 45,
         interval: 0  // Show every label
       }
     },
@@ -500,17 +540,14 @@
   };
   chart2.setOption(option2);
 
-  var chartData3 = <%- JSON.stringify(chartData3) %>;
-
-  var chart3 = echarts.init(document.getElementById('chartContainer3'));
   var option3 = {
-    title: { text: 'Scan Findings' },
+    title: { text: 'Findings' },
     tooltip: {},
     xAxis: {
       type: 'category',
       data: chartData3.map(item => item.packageName),
       axisLabel: {
-        rotate: 45,  // Rotate labels for better visibility
+        rotate: 45,
         interval: 0  // Show every label
       }
     },
@@ -521,10 +558,15 @@
   };
   chart3.setOption(option3);
 
-  // Handle window resize for responsive charts
   window.addEventListener('resize', function() {
-    chart1.resize();  // Resize chart1 on window resize
-    chart2.resize();  // Resize chart2 on window resize
-    chart3.resize();  // Resize chart3 on window resize
+    chart1.resize();
+    chart2.resize();
+    chart3.resize();
+  });
+
+  document.getElementById('collapseRow1').addEventListener('shown.bs.collapse', function () {
+    chart1.resize();
+    chart2.resize();
+    chart3.resize();
   });
 </script>

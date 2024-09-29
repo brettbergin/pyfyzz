@@ -7,10 +7,11 @@ const router = express.Router();
 const db = require('../db');
 
 router.get('/', async (req, res) => {
-    const { batch_job_id, sort = 'name', order = 'DESC' } = req.query; // Default sort by package name, descending
+    const { batch_job_id, sort = 'name', order = 'DESC', page = 1, limit = 10 } = req.query; // Pagination defaults
+    const offset = (page - 1) * limit;  // Calculate offset for pagination
 
     try {
-        let query = 'SELECT * FROM package_records';
+        let query = 'SELECT SQL_CALC_FOUND_ROWS * FROM package_records';
         const queryParams = [];
 
         // If batch_job_id is provided, filter by it
@@ -20,10 +21,12 @@ router.get('/', async (req, res) => {
         }
 
         // Add sorting to the query
-        query += ` ORDER BY ${sort} ${order.toUpperCase()}`;
+        query += ` ORDER BY ${sort} ${order.toUpperCase()} LIMIT ? OFFSET ?`;
+        queryParams.push(parseInt(limit), parseInt(offset)); // Add limit and offset for pagination
 
         // Execute the query
         const [packages] = await db.query(query, queryParams);
+        const [[{ totalRows }]] = await db.query('SELECT FOUND_ROWS() AS totalRows'); // Get total number of rows
 
         // Process each package description with markdown
         packages.forEach(pkg => {
@@ -42,7 +45,10 @@ router.get('/', async (req, res) => {
             packages,
             sort,
             order,
-            error: null  // No error if query succeeds
+            error: null,
+            page: parseInt(page),
+            totalRows,
+            limit: parseInt(limit)
         });
     } catch (error) {
         console.error(error);
@@ -57,7 +63,10 @@ router.get('/', async (req, res) => {
             packages: [],  // Empty array in case of error
             sort,
             order,
-            error: errorMessage
+            error: errorMessage,
+            page: parseInt(page),
+            totalRows: 0,
+            limit: parseInt(limit)
         });
     }
 });

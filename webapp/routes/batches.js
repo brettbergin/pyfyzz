@@ -7,10 +7,11 @@ const router = express.Router();
 const db = require('../db');
 
 router.get('/', async (req, res) => {
-    const { batch_job_id, sort = 'discovered_methods', order = 'DESC' } = req.query;
+    const { batch_job_id, sort = 'discovered_methods', order = 'DESC', page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;  // Calculate offset for pagination
 
     try {
-        let query = 'SELECT * FROM batches';
+        let query = 'SELECT SQL_CALC_FOUND_ROWS * FROM batches';
         const queryParams = [];
 
         // If batch_job_id is provided, filter by it
@@ -19,16 +20,21 @@ router.get('/', async (req, res) => {
             queryParams.push(batch_job_id);
         }
 
-        query += ` ORDER BY ${sort} ${order.toUpperCase()}`;
+        query += ` ORDER BY ${sort} ${order.toUpperCase()} LIMIT ? OFFSET ?`;
+        queryParams.push(parseInt(limit), parseInt(offset)); // Limit and offset for pagination
 
         const [batches] = await db.query(query, queryParams);
+        const [[{ totalRows }]] = await db.query('SELECT FOUND_ROWS() AS totalRows'); // Get total number of rows
 
         res.render('pages/batches', {
             title: `Batch for Job(s): ${batch_job_id || 'All'}`,
             batches,
             sort,
             order,
-            error: null  // No error if query succeeds
+            error: null,
+            page: parseInt(page),
+            totalRows,
+            limit: parseInt(limit)
         });
     } catch (error) {
         console.error(error);
@@ -40,20 +46,24 @@ router.get('/', async (req, res) => {
 
         res.render('pages/batches', {
             title: `Batch for Job(s): ${batch_job_id || 'All'}`,
-            batches: [], // Empty array in case of error
+            batches: [],
             sort,
             order,
-            error: errorMessage
+            error: errorMessage,
+            page: parseInt(page),
+            totalRows: 0,
+            limit: parseInt(limit)
         });
     }
 });
 
 router.post('/', async (req, res) => {
     const { package_to_scan } = req.body;
-    const { batch_job_id, sort = 'discovered_methods', order = 'DESC' } = req.query;
+    const { batch_job_id, sort = 'discovered_methods', order = 'DESC', page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;  // Calculate offset for pagination
 
     try {
-        let query = 'SELECT * FROM batches';
+        let query = 'SELECT SQL_CALC_FOUND_ROWS * FROM batches';
         const queryParams = [];
 
         // If batch_job_id is provided, filter by it
@@ -62,9 +72,11 @@ router.post('/', async (req, res) => {
             queryParams.push(batch_job_id);
         }
 
-        query += ` ORDER BY ${sort} ${order.toUpperCase()}`;
+        query += ` ORDER BY ${sort} ${order.toUpperCase()} LIMIT ? OFFSET ?`;
+        queryParams.push(parseInt(limit), parseInt(offset)); // Limit and offset for pagination
 
         const [batches] = await db.query(query, queryParams);
+        const [[{ totalRows }]] = await db.query('SELECT FOUND_ROWS() AS totalRows'); // Get total number of rows
 
         // If package_to_scan is provided, launch the PyFyzz scan
         if (package_to_scan) {
@@ -85,7 +97,10 @@ router.post('/', async (req, res) => {
                     batches,
                     sort,
                     order,
-                    error: null
+                    error: null,
+                    page: parseInt(page),
+                    totalRows,
+                    limit: parseInt(limit)
                 });
             });
         } else {
@@ -94,7 +109,10 @@ router.post('/', async (req, res) => {
                 batches,
                 sort,
                 order,
-                error: null
+                error: null,
+                page: parseInt(page),
+                totalRows,
+                limit: parseInt(limit)
             });
         }
     } catch (error) {
@@ -107,10 +125,13 @@ router.post('/', async (req, res) => {
 
         res.render('pages/batches', {
             title: `Batch for Job(s): ${batch_job_id || 'All'}`,
-            batches: [], // Empty array in case of error
+            batches: [],
             sort,
             order,
-            error: errorMessage
+            error: errorMessage,
+            page: parseInt(page),
+            totalRows: 0,
+            limit: parseInt(limit)
         });
     }
 });
