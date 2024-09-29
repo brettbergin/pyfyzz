@@ -239,48 +239,58 @@ def github_pull_request(
                     urls.append(v)
 
         else:
-            logger.log("error", "[-] Package information not found.")
+            logger.log(
+                "error",
+                "[-] PyPI Package information not found in database. No Github URL to use for pull request.",
+            )
             return
     else:
-        logger.log("error", "[-] Fuzz result not found.")
+        logger.log(
+            "error",
+            "[-] Requested fuzz result not found. Nothing to create a pull request from.",
+        )
         return
 
-    urls = [url for url in list(set(urls)) if url is not None]
     urls = [
         url
-        for url in urls
-        if url.startswith("https://github.com") and url.endswith(package_name)
+        for url in list(set(urls))
+        if url is not None
+        and url.lower().startswith("https://github.com")
+        and url.lower().endswith(package_name.lower())
+        or url.lower().endswith(f"{package_name.lower()}/")
     ]
 
     github_url = urls[0] if len(urls) > 0 else None
-    clone_path = os.path.join(os.path.expanduser("~"), ".pyfyzz", f"{package_name}")
-
-    if github_url:
-        if not os.path.exists(os.path.join(os.path.expanduser("~"), ".pyfyzz")):
-            os.makedirs(os.path.join(os.path.expanduser("~"), ".pyfyzz"))
-
-        fyzzgit.init_repo_from_url(repo_url=github_url)
-        fyzzgit.create_repo_clone(
-            repo_url=github_url,
-            repo_name=package_name,
-            clone_path=clone_path,
-            new_branch_name="improvements",
-        )
-
-        fyzzgit.make_improvements(
-            folder_path=clone_path,
-            package_name=package_name,
-            method_name=exception_to_report.method_name,
-            new_method_code=base64.b64decode(
-                exception_to_report.improved_source.encode("utf-8")
-            ).decode("utf-8"),
-        )
-
-    else:
+    if not github_url:
         logger.log(
             "error",
             f"[-] No GitHub URL enumerated for package: {exception_to_report.package_name}. URLs: {package_info.project_urls}",
         )
+        return
+
+    clone_path = os.path.join(os.path.expanduser("~"), ".pyfyzz", f"{package_name}")
+
+    if not os.path.exists(os.path.join(os.path.expanduser("~"), ".pyfyzz")):
+        os.makedirs(os.path.join(os.path.expanduser("~"), ".pyfyzz"))
+
+    fyzzgit.init_repo_from_url(repo_url=github_url)
+    fyzzgit.create_repo_clone(
+        repo_url=github_url,
+        repo_name=package_name,
+        clone_path=clone_path,
+        new_branch_name="improvements",
+    )
+
+    fyzzgit.make_improvements(
+        folder_path=clone_path,
+        package_name=package_name,
+        method_name=exception_to_report.method_name,
+        new_method_code=base64.b64decode(
+            exception_to_report.improved_source.encode("utf-8")
+        ).decode("utf-8"),
+    )
+
+    return
 
 
 def main() -> None:
@@ -349,7 +359,7 @@ def main() -> None:
             package_name=args.package_name,
             pyfyzz_record_id=args.record_id,
         )
-    
+
     else:
         print("No valid command provided. Use 'scan' or 'github_pull_request'.")
 

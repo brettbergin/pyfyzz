@@ -3,27 +3,39 @@
 <div class="container-fluid mt-5">
   <div class="card">
     <div class="card-header bg-primary text-white">
-      <h1 class="h3">Pull Request Results</h1>
+      <h1 class="h3 mb-0">Pull Request Results</h1>
     </div>
     <div class="card-body">
-      <!-- CLI Message Alert -->
+
+      <!-- CLI Message Alert (centered inline alert box) -->
       <% if (messageType) { %>
-        <div class="alert alert-<%= messageType || 'info' %> alert-dismissible fade show" role="alert">
-          <pre>Command Executed: <strong><%= pyfyzz_cmd %></strong></pre>
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="d-flex justify-content-center"> <!-- Centering the alert -->
+          <div class="alert alert-<%= messageType || 'info' %> alert-dismissible fade show d-inline-block" role="alert">
+            Command Executed: <strong><%= pyfyzz_cmd %></strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
         </div>
       <% } %>
 
       <!-- Result Information -->
       <h4 class="mt-4">Command Output</h4>
-      <% if (messageContent) { %>
-        <pre><code><%= messageContent %></code></pre>
+      <% if (messageContent && messageContent.trim()) { %>
+        <pre style="max-height: 1000px; overflow-y: auto;"><code><%= messageContent %></code></pre>
       <% } else { %>
-        <pre><code><%= 'No command output available.' %></code></pre>
+        <pre><code>No command output available.</code></pre>
       <% } %>
 
       <!-- Button to go back -->
-      <button class="btn btn-sm btn-secondary mt-3" onclick="goBack()">Go Back</button>
+      <div class="d-flex justify-content-start mt-3">
+        <button class="btn btn-sm btn-secondary" onclick="goBack()" aria-label="Go back to the previous page">Go Back</button>
+      </div>
+      
     </div>
   </div>
 </div>
+
+<script>
+  function goBack() {
+    window.history.back();
+  }
+</script>

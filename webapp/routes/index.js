@@ -8,7 +8,7 @@ const db = require('../db');
 
 
 router.get('/', async (req, res) => {
-    const { batch_job_id, package_name, sort = 'package_name', order = 'DESC' } = req.query;
+    const { batch_job_id = '', package_name = '', sort = 'package_name', order = 'DESC' } = req.query;
     const allowedSortFields = ['package_name', 'start_time', 'stop_time', 'discovered_methods'];
     const sanitizedSort = allowedSortFields.includes(sort) ? sort : 'package_name';
     const sanitizedOrder = ['ASC', 'DESC'].includes(order?.toUpperCase()) ? order.toUpperCase() : 'DESC';
@@ -155,48 +155,89 @@ router.get('/', async (req, res) => {
         } else {
             result.DecodedSource = 'No Source Available';
         }
-      });
-
-      results3[0].forEach(result => {
         if (result.ImprovedEncodedSource) {
-            try {
-                const decoded = Buffer.from(result.ImprovedEncodedSource, 'base64').toString('utf-8');
-                result.DecodedImprovedSource = escapeHtml(decoded);
-            } catch (e) {
-                result.DecodedImprovedSource = 'Improved Source Unknown';
-            }
+          try {
+              const decoded = Buffer.from(result.ImprovedEncodedSource, 'base64').toString('utf-8');
+              result.DecodedImprovedSource = escapeHtml(decoded);
+          } catch (e) {
+              result.DecodedImprovedSource = 'Improved Source Unknown';
+          }
         } else {
-            result.DecodedImprovedSource = 'No Improved Source Available';
+          result.DecodedImprovedSource = 'No Improved Source Available';
+        }
+        if (result.EncodedTraceback) {
+          try {
+              const decoded = Buffer.from(result.EncodedTraceback, 'base64').toString('utf-8');
+              result.DecodedTraceback = escapeHtml(decoded);
+          } catch (e) {
+              result.DecodedTraceback = 'Full Traceback Unknown';
+          }
+        } else {
+          result.DecodedTraceback = 'No Traceback Available';
         }
       });
 
-      results3[0].forEach(result => {
-        if (result.EncodedTraceback) {
-            try {
-                const decoded = Buffer.from(result.EncodedTraceback, 'base64').toString('utf-8');
-                result.DecodedTraceback = escapeHtml(decoded);
-            } catch (e) {
-                result.DecodedTraceback = 'Full Traceback Unknown';
-            }
+      // Chart data for results1
+      const chartData1 = results1[0].map(result => ({
+        packageName: result.package_name,
+        discoveredMethods: result.discovered_methods
+      }));
+
+      // Chart data for results2
+      const chartData2 = results2[0]
+        .filter(result => result.package_name !== 'Unknown')
+        .map(result => ({
+            packageName: result.package_name,
+            modulesCount: result.ModulesCount,
+            classesCount: result.ClassesCount,
+            methodsCount: result.MethodsCount
+      }));
+
+      // Chart data for results3 (Count of fuzz records per package)
+      const chartData3 = results3[0].reduce((acc, result) => {
+        const packageName = result.package_name;
+        const packageRecord = acc.find(item => item.packageName === packageName);
+        if (packageRecord) {
+            packageRecord.fuzzRecordCount += 1;
         } else {
-            result.DecodedTraceback = 'No Traceback Available';
+            acc.push({ packageName, fuzzRecordCount: 1 });
         }
-      });
-      
+        return acc;
+      }, []);
+
       res.render('pages/home', {
           title: 'PyFyzz Home',
           results1: results1[0],
           results2: results2[0],
           results3: results3[0],
+          chartData1,
+          chartData2,
+          chartData3,
           sort: sanitizedSort,
           order: sanitizedOrder,
           package_name: package_name || '',
-          batch_job_id: batch_job_id || ''
+          batch_job_id: batch_job_id || '',
+          error: null
       });
 
     } catch (error) {
-        console.error('Error executing queries:', error);
-        res.status(500).render('pages/500', { title: 'Server Error', error: 'Something went wrong!' });
+      console.error('Error executing query:', error);
+  
+      // Render the page with empty results and pass error message
+      res.render('pages/home', {
+        title: 'PyFyzz Home',
+        results1: [],
+        results2: [],
+        results3: [],
+        chartData1: [],
+        chartData2: [],
+        chartData3: [],
+        sort: sanitizedSort,
+        order: sanitizedOrder,
+        package_name: package_name || '',
+        batch_job_id: batch_job_id || '',
+        error: 'Unable to retrieve data. Please check database connection and schema.'
+      });
     }
 });
 
