@@ -162,9 +162,6 @@ cython_debug/
 #.idea/
 
 # Custom adds - because pyfyzz produces json/yaml
-*.json
-*.yaml
 **/node_modules
-webapp/package-lock.json
 alembic.ini
 migrations/*
