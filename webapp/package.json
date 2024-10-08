@@ -1,0 +1,25 @@
+{
+  "name": "webapp",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "dotenv": "^16.4.5",
+    "echarts": "^5.5.1",
+    "ejs": "^3.1.10",
+    "escape-html": "^1.0.3",
+    "express": "^4.19.2",
+    "marked": "^14.1.2",
+    "mysql2": "^3.11.0"
+  },
+  "devDependencies": {
+    "ejs-lint": "^2.0.0"
+  }
+}
